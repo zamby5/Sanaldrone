@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>3D Drone Analiz</title>
+    
+    <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+    <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
+
+    <style>
+        body { margin: 0; padding: 0; background: #000; font-family: sans-serif; }
+        #map { position: absolute; top: 0; bottom: 0; width: 100%; height: 100%; }
+        
+        .panel {
+            position: absolute; top: 10px; left: 10px; right: 10px;
+            background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(5px);
+            padding: 15px; border-radius: 10px; color: #fff; z-index: 10;
+            border: 1px solid #f59e0b; max-width: 350px;
+        }
+        input { width: 70%; padding: 8px; border-radius: 5px; border: none; }
+        button { padding: 8px 12px; border-radius: 5px; border: none; background: #f59e0b; font-weight: bold; cursor: pointer; }
+        .btn-drone { width: 100%; background: #ef4444; color: #fff; margin-top: 10px; padding: 12px; font-size: 16px; }
+        #coords { font-size: 10px; margin-top: 5px; color: #aaa; }
+    </style>
+</head>
+<body>
+
+<div id="map"></div>
+<div class="panel">
+    <div style="color:#f59e0b; font-weight:bold; margin-bottom:10px;">🚁 3D DRONE SİMÜLATÖRÜ</div>
+    <input type="text" id="searchInput" placeholder="Antalya, Göksu...">
+    <button onclick="searchLocation()">Ara</button>
+    <button id="droneBtn" class="btn-drone" onclick="toggleDrone()">DRONE BAŞLAT</button>
+    <div id="coords">Haritadan parsel seçin</div>
+</div>
+
+<script>
+    const map = new maplibregl.Map({
+        container: 'map',
+        style: 'https://tiles.openfreemap.org/styles/dark',
+        center: [30.7133, 36.8969],
+        zoom: 12,
+        pitch: 45,
+        antialias: true
+    });
+
+    let parcelPos = null;
+    let isDrone = false;
+    let frame;
+
+    map.on('load', () => {
+        map.addSource('parsel-src', { 'type': 'geojson', 'data': { 'type': 'FeatureCollection', 'features': [] } });
+        map.addLayer({
+            'id': 'parsel-3d', 'type': 'fill-extrusion', 'source': 'parsel-src',
+            'paint': { 'fill-extrusion-color': '#f59e0b', 'fill-extrusion-height': 30, 'fill-extrusion-opacity': 0.8 }
+        });
+    });
+
+    map.on('click', (e) => {
+        parcelPos = [e.lngLat.lng, e.lngLat.lat];
+        const d = 0.0001;
+        map.getSource('parsel-src').setData({
+            'type': 'Feature',
+            'geometry': { 'type': 'Polygon', 'coordinates': [[[parcelPos[0]-d, parcelPos[1]-d], [parcelPos[0]+d, parcelPos[1]-d], [parcelPos[0]+d, parcelPos[1]+d], [parcelPos[0]-d, parcelPos[1]+d], [parcelPos[0]-d, parcelPos[1]-d]]] }
+        });
+        document.getElementById('coords').innerText = "📍 Hedef İşaretlendi";
+        map.flyTo({ center: parcelPos, zoom: 17, pitch: 60 });
+    });
+
+    async function searchLocation() {
+        const q = document.getElementById('searchInput').value;
+        const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${q}`);
+        const d = await r.json();
+        if(d[0]) map.flyTo({ center: [parseFloat(d[0].lon), parseFloat(d[0].lat)], zoom: 15 });
+    }
+
+    function rotate(t) {
+        if (!isDrone) return;
+        map.setBearing((t / 150) % 360);
+        frame = requestAnimationFrame(rotate);
+    }
+
+    function toggleDrone() {
+        if (!parcelPos) return alert("Önce haritaya dokun!");
+        isDrone = !isDrone;
+        const btn = document.getElementById('droneBtn');
+        if (isDrone) {
+            btn.innerText = "DURDUR";
+            rotate(0);
+        } else {
+            btn.innerText = "DRONE BAŞLAT";
+            cancelAnimationFrame(frame);
+        }
+    }
+</script>
+</body>
+</html>
