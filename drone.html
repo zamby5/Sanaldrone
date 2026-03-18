@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="tr" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover,maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="İnşaat Pro">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0a0e1a">
+<title>İnşaat Pro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+:root{--bg:#0a0e1a;--surface:#111827;--surface2:#1c2333;--surface3:#252f42;--text:#e8edf5;--text2:#8892a4;--text3:#5a6478;--primary:#f59e0b;--pdim:rgba(245,158,11,.15);--blue:#3b82f6;--bdim:rgba(59,130,246,.12);--green:#10b981;--gdim:rgba(16,185,129,.12);--red:#ef4444;--rdim:rgba(239,68,68,.12);--purple:#8b5cf6;--border:rgba(255,255,255,.07);--border2:rgba(255,255,255,.12);--radius:14px;--rsm:8px;--shadow:0 4px 20px rgba(0,0,0,.4);--hh:54px;--nh:62px;--fd:'Syne',sans-serif;--fb:'DM Sans',sans-serif}
+[data-theme="light"]{--bg:#f0f2f8;--surface:#fff;--surface2:#f5f7fc;--surface3:#eaecf4;--text:#0d1117;--text2:#4b5566;--text3:#9ca3b8;--primary:#d97706;--pdim:rgba(217,119,6,.1);--blue:#2563eb;--bdim:rgba(37,99,235,.08);--green:#059669;--gdim:rgba(5,150,105,.08);--red:#dc2626;--rdim:rgba(220,38,38,.08);--border:rgba(0,0,0,.07);--border2:rgba(0,0,0,.12);--shadow:0 2px 12px rgba(0,0,0,.08)}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+.header{position:fixed;top:0;left:0;right:0;height:var(--hh);background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 12px;gap:8px;z-index:200;backdrop-filter:blur(12px)}
+.h-logo{font-family:var(--fd);font-size:16px;font-weight:800;color:var(--primary);flex:1;line-height:1;letter-spacing:-.3px}
+.h-logo small{display:block;font-family:var(--fb);font-size:10px;color:var(--text2);font-weight:400;max-width:155px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px}
+.mpill{background:var(--pdim);color:var(--primary);border:1px solid var(--primary);border-radius:20px;padding:3px 9px;font-size:10px;font-weight:700;cursor:pointer;font-family:var(--fd);letter-spacing:.5px;white-space:nowrap}
+.hbtn{width:33px;height:33px;border:1px solid var(--border2);border-radius:8px;background:var(--surface2);color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;transition:.2s}
+.hbtn:active{transform:scale(.9);background:var(--surface3)}
+.bnav{position:fixed;bottom:0;left:0;right:0;height:var(--nh);background:var(--surface);border-top:1px solid var(--border);display:flex;align-items:stretch;justify-content:space-around;z-index:200;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.bnav::-webkit-scrollbar{display:none}
+.ni{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:5px;cursor:pointer;border-radius:10px;min-width:46px;color:var(--text3);transition:.18s;flex-shrink:0}
+.ni.on{color:var(--primary)}.ni .ic{font-size:18px;line-height:1}.ni .lb{font-size:9px;font-weight:600;text-align:center;white-space:nowrap;line-height:1}
+.ni-dot{width:4px;height:4px;border-radius:50%;background:var(--primary);margin-top:1px;opacity:0;transition:.2s}.ni.on .ni-dot{opacity:1}
+.main{margin-top:var(--hh);margin-bottom:var(--nh);padding:13px;min-height:calc(100vh - var(--hh) - var(--nh))}
+.tab{display:none}.tab.on{display:block}
+.card{background:var(--surface);border-radius:var(--radius);padding:14px;margin-bottom:11px;border:1px solid var(--border)}
+.card-t{font-family:var(--fd);font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px;display:flex;align-items:center;gap:7px;letter-spacing:-.2px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:9px}.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px}.full{grid-column:1/-1}
+.fg{display:flex;flex-direction:column;gap:3px}
+label{font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;font-family:var(--fd)}
+input,select,textarea{background:var(--surface2);border:1px solid var(--border2);border-radius:var(--rsm);padding:9px 10px;color:var(--text);font-size:13px;width:100%;font-family:var(--fb);transition:.2s;-webkit-appearance:none}
+input:focus,select:focus{outline:none;border-color:var(--primary);background:var(--surface3)}
+select option{background:var(--surface);color:var(--text)}
+input[type=range]{padding:5px 0;accent-color:var(--primary);background:transparent;border:none}
+input[type=checkbox]{width:16px;height:16px;flex-shrink:0;cursor:pointer;accent-color:var(--primary)}
+.btn{padding:10px 15px;border-radius:var(--rsm);font-size:13px;font-weight:600;cursor:pointer;border:none;display:inline-flex;align-items:center;gap:6px;transition:.18s;font-family:var(--fb)}
+.btn:active{transform:scale(.95)}.btnp{background:var(--primary);color:#0d0a00}.btno{background:var(--surface2);border:1px solid var(--border2);color:var(--text)}.btng{background:var(--green);color:#fff}
+.btnf{width:100%;justify-content:center;margin-top:9px}
+.srow{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:9px}
+.sc{background:var(--surface2);border-radius:10px;padding:10px 7px;text-align:center;border:1px solid var(--border)}
+.sv{font-family:var(--fd);font-size:16px;font-weight:700;color:var(--primary);line-height:1}.sl{font-size:9px;color:var(--text2);margin-top:3px;line-height:1.3;font-weight:500}
+.sv.blue{color:var(--blue)}.sv.green{color:var(--green)}.sv.red{color:var(--red)}
+.rg{display:flex;align-items:center;gap:7px}.rg input{flex:1}.rv{font-family:var(--fd);font-weight:700;color:var(--primary);min-width:36px;text-align:right;font-size:14px}
+.tgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.tc{border:2px solid var(--border2);border-radius:11px;padding:11px 5px;text-align:center;cursor:pointer;transition:.2s}
+.tc.sel{border-color:var(--primary);background:var(--pdim)}.tc .ic{font-size:24px;line-height:1}.tc .nm{font-size:10px;font-weight:700;margin-top:4px;color:var(--text);font-family:var(--fd)}
+.swgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.sw{border-radius:10px;padding:11px;border:1px solid transparent}
+.sw.s{background:var(--gdim);border-color:rgba(16,185,129,.2)}.sw.w{background:var(--rdim);border-color:rgba(239,68,68,.2)}.sw.o{background:var(--bdim);border-color:rgba(59,130,246,.2)}.sw.t{background:var(--pdim);border-color:rgba(245,158,11,.2)}
+.sw-t{font-size:10px;font-weight:800;font-family:var(--fd);letter-spacing:.5px;margin-bottom:6px}
+.sw.s .sw-t{color:var(--green)}.sw.w .sw-t{color:var(--red)}.sw.o .sw-t{color:var(--blue)}.sw.t .sw-t{color:var(--primary)}
+.sw-i{font-size:10px;padding:2px 0;border-bottom:1px solid rgba(255,255,255,.05);color:var(--text2);line-height:1.4}
+[data-theme="light"] .sw-i{border-bottom-color:rgba(0,0,0,.05)}
+.ggrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.gi{background:var(--surface2);border-radius:10px;padding:11px 7px;text-align:center;cursor:pointer;transition:.18s;border:1px solid var(--border)}
+.gi:active{background:var(--pdim);border-color:var(--primary)}.gi .ic{font-size:20px}.gi .nm{font-size:9px;font-weight:700;margin-top:4px;color:var(--text);font-family:var(--fd)}
+.pbar{background:var(--surface3);border-radius:100px;height:7px;overflow:hidden;margin-top:7px}
+.pfill{height:100%;border-radius:100px;background:var(--primary);transition:width .6s}
+.stog{display:flex;background:var(--surface2);border-radius:10px;padding:3px;margin-bottom:13px;gap:3px}
+.stog button{flex:1;padding:8px;border:none;border-radius:7px;background:transparent;color:var(--text2);font-size:12px;font-weight:700;cursor:pointer;transition:.2s;font-family:var(--fd)}
+.stog button.on{background:var(--surface);color:var(--primary);box-shadow:0 1px 6px rgba(0,0,0,.3)}
+.arow{display:flex;align-items:center;gap:8px;padding:8px;background:var(--surface2);border-radius:8px;margin-bottom:5px;border:1px solid var(--border)}
+.abadge{background:var(--primary);color:#000;border-radius:5px;padding:3px 8px;font-size:11px;font-weight:800;min-width:36px;text-align:center;font-family:var(--fd)}
+.ainfo{flex:1}.ainfo .atype{font-size:12px;font-weight:600}.ainfo .adet{font-size:10px;color:var(--text2)}
+.acnt{font-family:var(--fd);font-size:16px;font-weight:800;color:var(--primary);min-width:26px;text-align:right}
+.actgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.actbtn{padding:13px 7px;border-radius:10px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);font-size:10px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;transition:.18s;font-family:var(--fd)}
+.actbtn .ic{font-size:21px}.actbtn:active{background:var(--pdim);border-color:var(--primary);transform:scale(.95)}
+#map{height:250px;border-radius:11px;overflow:hidden}
+.div{height:1px;background:var(--border);margin:11px 0}
+.hl{background:var(--pdim);border:1px solid rgba(245,158,11,.3);border-radius:9px;padding:11px;text-align:center}
+.hl .v{font-family:var(--fd);font-size:19px;font-weight:800;color:var(--primary)}.hl .l{font-size:10px;color:var(--text2);margin-top:2px}
+.sumrow{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px}
+.sumrow:last-child{border-bottom:none}.sum-k{color:var(--text2)}.sum-v{font-weight:700;font-family:var(--fd);font-size:13px}
+.toast{position:fixed;bottom:calc(var(--nh) + 10px);left:50%;transform:translateX(-50%) translateY(8px);background:var(--surface);border:1px solid var(--border2);border-radius:20px;padding:8px 16px;font-size:12px;font-weight:600;z-index:300;opacity:0;transition:.3s;pointer-events:none;white-space:nowrap;box-shadow:var(--shadow)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.protag{background:linear-gradient(135deg,var(--purple),var(--blue));color:#fff;border-radius:4px;font-size:8px;padding:1px 5px;font-weight:700;vertical-align:middle;margin-left:4px}
+.tl-ph{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.tl-lbl{font-size:10px;font-weight:600;min-width:88px;color:var(--text2)}
+.tl-bw{flex:1;background:var(--surface3);border-radius:100px;height:17px;position:relative;overflow:hidden}
+.tl-b{height:100%;border-radius:100px;display:flex;align-items:center;padding-left:6px;font-size:8px;font-weight:700;color:rgba(0,0,0,.8);transition:width .6s}
+.tl-d{font-size:10px;color:var(--text3);min-width:30px;text-align:right}
+#section-canvas{width:100%;border-radius:10px;display:block}
+#guide-text{font-size:12px;line-height:1.75;color:var(--text2);white-space:pre-line}
+.rot-ctrl{display:flex;align-items:center;justify-content:center;gap:8px;margin:8px 0 12px}
+.rot-btn{width:36px;height:36px;border:1px solid var(--border2);border-radius:8px;background:var(--surface2);color:var(--text);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.18s}
+.rot-btn:active{background:var(--pdim);border-color:var(--primary)}
+.rot-ang{font-family:var(--fd);font-size:13px;font-weight:700;color:var(--primary);min-width:42px;text-align:center;background:var(--surface2);border-radius:6px;padding:3px 0}
+.cur-row{display:flex;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)}
+.cur-row:last-child{border-bottom:none}
+.cur-flag{font-size:20px;min-width:30px;text-align:center}
+.cur-pair{flex:1;margin-left:8px}
+.cur-name{font-size:12px;font-weight:700;color:var(--text);font-family:var(--fd)}
+.cur-sub{font-size:9px;color:var(--text3)}
+.cur-val{font-family:var(--fd);font-size:15px;font-weight:800;color:var(--primary);text-align:right}
+.cur-chg{font-size:9px;padding:2px 6px;border-radius:20px;font-weight:700;display:block;text-align:right;margin-top:2px}
+.cur-up{background:var(--gdim);color:var(--green)}.cur-dn{background:var(--rdim);color:var(--red)}.cur-nc{background:var(--bdim);color:var(--blue)}
+
+@media print{.header,.bnav,.no-print{display:none!important}.main{margin:0;padding:12px}.tab{display:block!important}.card{break-inside:avoid;box-shadow:none;border:1px solid #ccc;margin-bottom:8px}body{background:#fff;color:#000}}
+@media(orientation:landscape)and(max-height:500px){:root{--hh:42px;--nh:50px}.main{padding:9px}.ni .lb{display:none}.ni{min-width:40px}}
+::-webkit-scrollbar{width:3px;height:3px}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="h-logo">🏗️ İnşaat Pro<small id="h-proj">Proje adı girin...</small></div>
+  <span class="mpill" onclick="toggleMode()" id="mode-btn">🎓 UZMAN</span>
+  <button class="hbtn" onclick="toggleTheme()" id="theme-btn">🌙</button>
+  <button class="hbtn" onclick="toggleLang()" id="lang-btn" style="font-size:11px;font-weight:700;font-family:var(--fd)">TR</button>
+</div>
+
+<div class="main">
+
+<!-- TAB 0: PROJE -->
+<div class="tab on" id="tab-0">
+  <div class="card">
+    <div class="card-t">📋 Proje & Parsel Bilgileri</div>
+    <div class="g2">
+      <div class="fg full"><label>Proje Adı</label><input type="text" id="proje-adi" placeholder="Örn: Bağcılar Karma Proje" oninput="updateProjName()"></div>
+      <div class="fg"><label>İl</label><select id="il-sel" onchange="loadIlce()"></select></div>
+      <div class="fg"><label>İlçe</label><select id="ilce-sel" onchange="syncMapQ()"><option value="">Önce il seçin</option></select></div>
+      <div class="fg"><label>Mahalle</label><input type="text" id="mahalle" placeholder="Mahalle adı"></div>
+      <div class="fg"><label>Ada No</label><input type="number" id="ada-no" placeholder="123"></div>
+      <div class="fg"><label>Parsel No</label><input type="number" id="parsel-no" placeholder="45"></div>
+      <div class="fg"><label>Parsel Alanı (m²)</label><input type="number" id="parsel-alan" placeholder="500" oninput="calculate()"></div>
+      <div class="fg"><label>TAKS</label><input type="number" id="taks" value="0.40" min="0.1" max="0.9" step="0.05" oninput="calculate()"></div>
+      <div class="fg"><label>KAKS / Emsal</label><input type="number" id="kaks" value="2.00" min="0.1" max="8" step="0.1" oninput="calculate()"></div>
+      <div class="fg"><label>Kat Yüksekliği (m)</label><input type="number" id="kat-y" value="3.00" step="0.5" oninput="calculate()"></div>
+    </div>
+  </div>
+  <div class="card" id="calc-card" style="display:none">
+    <div class="card-t">📊 Temel Hesaplar</div>
+    <div class="srow">
+      <div class="sc"><div class="sv" id="r-insaat">-</div><div class="sl">Toplam m²</div></div>
+      <div class="sc"><div class="sv blue" id="r-kat">-</div><div class="sl">Kat Sayısı</div></div>
+      <div class="sc"><div class="sv green" id="r-taban">-</div><div class="sl">Taban m²</div></div>
+    </div>
+    <div class="srow">
+      <div class="sc"><div class="sv" id="r-net">-</div><div class="sl">Net Satış m²</div></div>
+      <div class="sc"><div class="sv blue" id="r-h">-</div><div class="sl">Bina Yük. m</div></div>
+      <div class="sc"><div class="sv green" id="r-daire">-</div><div class="sl">~Daire Sayısı</div></div>
+    </div>
+    <button class="btn btnp btnf" onclick="saveData()" data-lk="btn.save">💾 Kaydet & Güncelle</button>
+  </div>
+</div>
+
+<!-- TAB 1: YAPI TİPİ & KAT KARŞILIĞI -->
+<div class="tab" id="tab-1">
+  <div class="card">
+    <div class="card-t">🏘️ Yapı Kullanım Tipi</div>
+    <div class="tgrid">
+      <div class="tc sel" onclick="selType('konut',this)"><div class="ic">🏠</div><div class="nm">Konut</div></div>
+      <div class="tc" onclick="selType('ticari',this)"><div class="ic">🏢</div><div class="nm">Ticari</div></div>
+      <div class="tc" onclick="selType('karma',this)"><div class="ic">🏬</div><div class="nm">Karma</div></div>
+      <div class="tc" onclick="selType('giris-ticari',this)"><div class="ic">🏪</div><div class="nm">Giriş Ticari</div></div>
+      <div class="tc" onclick="selType('ofis',this)"><div class="ic">💼</div><div class="nm">Ofis</div></div>
+      <div class="tc" onclick="selType('sanayi',this)"><div class="ic">🏭</div><div class="nm">Sanayi</div></div>
+    </div>
+  </div>
+  <div class="card" id="oran-card" style="display:none">
+    <div class="card-t">⚖️ Ticari / Konut Oranı</div>
+    <div class="fg"><label>Ticari Oran (%)</label>
+    <div class="rg"><input type="range" id="ticari-oran" min="5" max="80" value="20" oninput="S.ticariOran=+this.value;document.getElementById('tov').textContent='%'+this.value;renderSection()"><div class="rv" id="tov">%20</div></div></div>
+  </div>
+  <div class="card">
+    <div class="card-t">🤝 Kat Karşılığı Hesabı</div>
+    <div class="g2">
+      <div class="fg full"><label>Arsa Sahibi Payı (%)</label>
+      <div class="rg"><input type="range" id="arsa-pct" min="20" max="60" value="40" oninput="updArsa(this.value)"><div class="rv" id="arsa-pct-v">%40</div></div></div>
+      <div class="fg"><label>Müteahhit Payı</label><div style="font-family:var(--fd);font-size:20px;font-weight:800;color:var(--blue);padding-top:4px" id="mut-pct">%60</div></div>
+      <div class="fg"><label>Ort. Daire m²</label><input type="number" id="avg-m2" value="90" oninput="calcKK()"></div>
+      <div class="fg"><label>Satış Fiyatı (₺/m²)</label><input type="number" id="satis-fiyat" value="50000" oninput="calcKK()"></div>
+      <div class="fg"><label>İnşaat Maliyeti (₺/m²)</label><input type="number" id="ins-maliyet" value="12000" oninput="calcKK()"></div>
+      <div class="fg"><label>Ortak Alan (%)</label><input type="number" id="ortak-pct" value="25" min="10" max="40" oninput="calcKK()"></div>
+    </div>
+    <div class="div"></div>
+    <div id="kk-res" style="display:none">
+      <div class="srow">
+        <div class="sc"><div class="sv green" id="kk-arsa-d">-</div><div class="sl">Arsa Dairesi</div></div>
+        <div class="sc"><div class="sv blue" id="kk-mut-d">-</div><div class="sl">Müt. Dairesi</div></div>
+        <div class="sc"><div class="sv" id="kk-kar">-</div><div class="sl">Kâr Marjı</div></div>
+      </div>
+      <div class="srow">
+        <div class="sc"><div class="sv green" id="kk-gelir" style="font-size:12px">-</div><div class="sl">Toplam Gelir</div></div>
+        <div class="sc"><div class="sv blue" id="kk-net" style="font-size:12px">-</div><div class="sl">Müt. Net Kâr</div></div>
+        <div class="sc"><div class="sv" id="kk-arsav" style="font-size:12px">-</div><div class="sl">Arsa Değeri</div></div>
+      </div>
+    </div>
+    <button class="btn btnp btnf" onclick="calcKK()" data-lk="btn.kk">🧮 Hesapla</button>
+  </div>
+</div>
+
+<!-- TAB 2: OPTİMİZER -->
+<div class="tab" id="tab-2">
+  <div class="card">
+    <div class="card-t">🎯 Daire Dağılımı Optimizer</div>
+    <div class="g2">
+      <div class="fg"><label>Hedef</label>
+      <select id="opt-goal" onchange="runOpt()">
+        <option value="value">Max Değer</option>
+        <option value="units">Max Adet</option>
+        <option value="balanced">Dengeli</option>
+      </select></div>
+      <div class="fg"><label>Ortak Alan (%)</label><input type="number" id="opt-ortak" value="25" oninput="runOpt()"></div>
+    </div>
+    <div class="div"></div>
+    <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:9px">Daire Tipleri & Sınırlar</div>
+    <div id="apt-cfg"></div>
+    <button class="btn btnp btnf" onclick="runOpt()" data-lk="btn.opt">⚡ Optimize Et</button>
+  </div>
+  <div class="card" id="opt-res" style="display:none">
+    <div class="card-t">✅ Optimum Dağılım</div>
+    <div id="opt-list"></div>
+    <div class="div"></div>
+    <div class="srow" id="opt-sum"></div>
+  </div>
+</div>
+
+<!-- TAB 3: KESİT -->
+<div class="tab" id="tab-3">
+  <div class="card">
+    <div class="card-t">🏗️ Bina Kesit Görünümü</div>
+    <canvas id="section-canvas"></canvas>
+    <div class="rot-ctrl">
+      <button class="rot-btn" onclick="rotateView(-20)" title="Sol">◀◀</button>
+      <button class="rot-btn" onclick="rotateView(-5)">‹</button>
+      <span class="rot-ang" id="rot-lbl">0°</span>
+      <button class="rot-btn" onclick="rotateView(5)">›</button>
+      <button class="rot-btn" onclick="rotateView(20)" title="Sağ">▶▶</button>
+      <button class="rot-btn" onclick="S.rotY=0;renderSection()" title="Sıfırla" style="font-size:16px">⟳</button>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text2)"><span style="width:10px;height:10px;background:#3b82f6;border-radius:2px;display:inline-block"></span>Konut</span>
+      <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text2)"><span style="width:10px;height:10px;background:#f59e0b;border-radius:2px;display:inline-block"></span>Ticari</span>
+      <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text2)"><span style="width:10px;height:10px;background:#374151;border-radius:2px;display:inline-block"></span>Otopark</span>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-t">📐 Kat Listesi</div>
+    <div id="floor-list"></div>
+  </div>
+</div>
+
+<!-- TAB 4: HARİTA -->
+<div class="tab" id="tab-4">
+  <div class="card" style="padding:12px">
+    <div class="g2" style="margin-bottom:9px">
+      <div class="fg"><label>Adres Ara</label><input type="text" id="map-q" placeholder="İl, İlçe, Mahalle..."></div>
+      <div class="fg" style="justify-content:flex-end"><button class="btn btnp" style="margin-top:17px" onclick="searchMap()">🔍 Ara</button></div>
+    </div>
+    <div id="map"></div>
+    <div class="g3" style="margin-top:9px">
+      <div class="sc"><div class="sv" id="m-lat" style="font-size:11px">-</div><div class="sl">Enlem</div></div>
+      <div class="sc"><div class="sv" id="m-lng" style="font-size:11px">-</div><div class="sl">Boylam</div></div>
+      <div class="sc"><div class="sv" id="m-zoom" style="font-size:11px">-</div><div class="sl">Zoom</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 5: ANALİZ -->
+<div class="tab" id="tab-5">
+  <div class="card">
+    <div class="card-t">📊 SWOT Analizi</div>
+    <div class="swgrid">
+      <div class="sw s"><div class="sw-t">💪 GÜÇLÜ</div><div id="sw-s"></div></div>
+      <div class="sw w"><div class="sw-t">⚠️ ZAYIF</div><div id="sw-w"></div></div>
+      <div class="sw o"><div class="sw-t">🚀 FIRSAT</div><div id="sw-o"></div></div>
+      <div class="sw t"><div class="sw-t">🎯 TEHDİT</div><div id="sw-t"></div></div>
+    </div>
+    <button class="btn btno btnf no-print" onclick="genSWOT()" data-lk="btn.swot">🔄 Güncelle</button>
+  </div>
+  <div class="card">
+    <div class="card-t">💱 <span id="cur-title">Canlı Döviz Kurları</span></div>
+    <div id="cur-widget" style="min-height:60px">
+      <div style="text-align:center;color:var(--text3);font-size:11px;padding:16px">⏳ Yükleniyor...</div>
+    </div>
+    <div style="font-size:9px;color:var(--text3);text-align:right;margin-top:4px" id="cur-time"></div>
+    <button class="btn btno btnf" style="margin-top:8px" onclick="fetchCurrency()">🔄 <span id="cur-refresh-lbl">Güncelle</span></button>
+  </div>
+  <div class="card">
+    <div class="card-t">💰 Yatırım Getiri Analizi (ROI)</div>
+    <div class="g2">
+      <div class="fg"><label>Arsa Değeri (₺)</label><input type="number" id="arsa-deger" placeholder="5000000" oninput="calcROI()"></div>
+      <div class="fg"><label>Diğer Giderler (₺)</label><input type="number" id="diger-gider" value="0" oninput="calcROI()"></div>
+    </div>
+    <div class="div"></div>
+    <div id="roi-res" style="display:none">
+      <div class="srow">
+        <div class="sc"><div class="sv red" id="roi-mal" style="font-size:11px">-</div><div class="sl">Toplam Maliyet</div></div>
+        <div class="sc"><div class="sv green" id="roi-gel" style="font-size:11px">-</div><div class="sl">Müt. Geliri</div></div>
+        <div class="sc"><div class="sv" id="roi-pct">-</div><div class="sl">ROI %</div></div>
+      </div>
+      <div class="pbar"><div class="pfill" id="roi-bar" style="width:0%"></div></div>
+      <div style="font-size:10px;color:var(--text3);margin-top:4px;text-align:right" id="roi-note"></div>
+    </div>
+    <button class="btn btnp btnf" onclick="calcROI()" data-lk="btn.roi">📈 ROI Hesapla</button>
+  </div>
+</div>
+
+<!-- TAB 6: SİMÜLATÖR -->
+<div class="tab" id="tab-6">
+
+  <!-- ── HIZLI BLK ── -->
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+    <div style="flex:1;height:1px;background:var(--border)"></div>
+    <span style="font-size:10px;font-weight:800;color:var(--text3);letter-spacing:1px;font-family:var(--fd)">HIZLI TAHMİN</span>
+    <div style="flex:1;height:1px;background:var(--border)"></div>
+  </div>
+  <div class="card" style="border-color:rgba(16,185,129,.25);background:linear-gradient(135deg,var(--surface) 0%,rgba(16,185,129,.04) 100%)">
+    <div class="card-t" style="color:var(--green)">🟢 Anlık Simülasyon <span style="font-size:9px;background:var(--gdim);color:var(--green);border-radius:4px;padding:2px 7px;font-weight:700;margin-left:4px">SLIDER</span></div>
+    <div style="font-size:10px;color:var(--text3);margin-bottom:12px;line-height:1.5">Kaydırarak anında sonuç görün — proje verisi gerekmez.</div>
+
+    <div class="fg" style="margin-bottom:13px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
+        <label>Parsel Alanı</label><span style="font-size:10px;color:var(--text2)">m²</span>
+      </div>
+      <div class="rg"><input type="range" id="s-parsel" min="100" max="5000" step="50" value="500" oninput="simUpd()"><div class="rv" id="s-pv">500</div></div>
+    </div>
+    <div class="fg" style="margin-bottom:13px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
+        <label>Emsal (KAKS)</label><span style="font-size:10px;color:var(--text2)">0.5 → 6.0</span>
+      </div>
+      <div class="rg"><input type="range" id="s-kaks" min="0.5" max="6" step="0.1" value="2" oninput="simUpd()"><div class="rv" id="s-kv">2.0</div></div>
+    </div>
+    <div class="fg" style="margin-bottom:13px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
+        <label>Satış Fiyatı</label><span style="font-size:10px;color:var(--text2)">₺/m²</span>
+      </div>
+      <div class="rg"><input type="range" id="s-fiyat" min="5000" max="200000" step="1000" value="50000" oninput="simUpd()"><div class="rv" id="s-fv">50K</div></div>
+    </div>
+    <div class="fg" style="margin-bottom:0">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
+        <label>İnşaat Maliyeti</label><span style="font-size:10px;color:var(--text2)">₺/m²</span>
+      </div>
+      <div class="rg"><input type="range" id="s-maliyet" min="3000" max="40000" step="500" value="12000" oninput="simUpd()"><div class="rv" id="s-mv">12K</div></div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:13px">
+      <div class="sc"><div class="sv" id="s-alan">-</div><div class="sl">İnşaat m²</div></div>
+      <div class="sc"><div class="sv blue" id="s-daire">-</div><div class="sl">~Daire Sayısı</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-top:7px">
+      <div class="sc"><div class="sv green" id="s-gelir" style="font-size:11px">-</div><div class="sl">Brüt Gelir</div></div>
+      <div class="sc"><div class="sv" id="s-kar" style="font-size:11px">-</div><div class="sl">Net Kâr</div></div>
+      <div class="sc"><div class="sv" id="s-margin">-%</div><div class="sl">Kâr Marjı</div></div>
+    </div>
+  </div>
+
+  <!-- ── AYRAÇ ── -->
+  <div style="display:flex;align-items:center;gap:8px;margin:4px 0 8px">
+    <div style="flex:1;height:1px;background:var(--border)"></div>
+    <span style="font-size:10px;font-weight:800;color:var(--text3);letter-spacing:1px;font-family:var(--fd)">DETAYLI ANALİZ</span>
+    <div style="flex:1;height:1px;background:var(--border)"></div>
+  </div>
+
+  <!-- ── PRO BLK ── -->
+  <div class="card" style="border-color:rgba(139,92,246,.3);background:linear-gradient(135deg,var(--surface) 0%,rgba(139,92,246,.05) 100%)">
+    <div class="card-t" style="color:var(--purple)">⚡ Pro Finansal Analiz <span class="protag">PRO</span></div>
+    <div style="font-size:10px;color:var(--text3);margin-bottom:12px;line-height:1.5">Enflasyon, faiz ve pazarlama maliyetleri dahil — gerçekçi proje kâr/zarar analizi.</div>
+
+    <!-- Zaman & Finansman -->
+    <div style="font-size:10px;font-weight:800;color:var(--purple);letter-spacing:.5px;margin-bottom:8px;font-family:var(--fd)">📅 ZAMAN & FİNANSMAN</div>
+    <div class="g2" style="margin-bottom:12px">
+      <div class="fg"><label>Yapım Süresi (ay)</label><input type="number" id="p-sure" value="24" min="6" max="60"></div>
+      <div class="fg"><label>Satış Süresi (ay)</label><input type="number" id="p-satis" value="12" min="1" max="36"></div>
+    </div>
+
+    <!-- Makroekonomik -->
+    <div style="font-size:10px;font-weight:800;color:var(--blue);letter-spacing:.5px;margin-bottom:8px;font-family:var(--fd)">📈 MAKROEKONOMİK</div>
+    <div class="g2" style="margin-bottom:12px">
+      <div class="fg"><label>Faiz Oranı (%/yıl)</label><input type="number" id="p-faiz" value="35" min="0" max="100"></div>
+      <div class="fg"><label>Enflasyon (%/yıl)</label><input type="number" id="p-enf" value="40" min="0" max="200"></div>
+    </div>
+
+    <!-- Sabit Giderler -->
+    <div style="font-size:10px;font-weight:800;color:var(--primary);letter-spacing:.5px;margin-bottom:8px;font-family:var(--fd)">💸 SABİT GİDERLER</div>
+    <div class="g2">
+      <div class="fg"><label>Ruhsat & İzin (₺)</label><input type="number" id="p-ruhsat" value="200000"></div>
+      <div class="fg"><label>Pazarlama (%)</label><input type="number" id="p-paz" value="3" min="0" max="20"></div>
+    </div>
+
+    <button class="btn btnp btnf" style="background:var(--purple);margin-top:14px" onclick="calcPro()" data-lk="btn.pro">⚡ Detaylı Analizi Hesapla</button>
+
+    <div id="pro-res" style="display:none">
+      <div class="div"></div>
+      <div id="pro-content"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- TAB 7: REHBER -->
+<div class="tab" id="tab-7">
+  <div class="card">
+    <div class="card-t">📚 İnşaat Rehberi</div>
+    <div class="ggrid">
+      <div class="gi" onclick="showGuide('taks')"><div class="ic">📏</div><div class="nm">TAKS Nedir?</div></div>
+      <div class="gi" onclick="showGuide('kaks')"><div class="ic">📐</div><div class="nm">KAKS/Emsal</div></div>
+      <div class="gi" onclick="showGuide('kk')"><div class="ic">🤝</div><div class="nm">Kat Karşılığı</div></div>
+      <div class="gi" onclick="showGuide('imar')"><div class="ic">📋</div><div class="nm">İmar Planı</div></div>
+      <div class="gi" onclick="showGuide('ruhsat')"><div class="ic">🏛️</div><div class="nm">Ruhsat Süreci</div></div>
+      <div class="gi" onclick="showGuide('deprem')"><div class="ic">🌍</div><div class="nm">Deprem Yön.</div></div>
+      <div class="gi" onclick="showGuide('arsa')"><div class="ic">🗺️</div><div class="nm">Arsa Değerleme</div></div>
+      <div class="gi" onclick="showGuide('sozlesme')"><div class="ic">📝</div><div class="nm">Sözleşme</div></div>
+      <div class="gi" onclick="showGuide('maliyet')"><div class="ic">🧱</div><div class="nm">Maliyet Tablosu</div></div>
+      <div class="gi" onclick="showGuide('arsapayi')"><div class="ic">🤲</div><div class="nm">Arsa Payı</div></div>
+      <div class="gi" onclick="showGuide('tapu')"><div class="ic">📜</div><div class="nm">Tapu Okuma</div></div>
+      <div class="gi" onclick="showGuide('kdont')"><div class="ic">🏚️</div><div class="nm">Kentsel Dön.</div></div>
+    </div>
+  </div>
+  <div class="card" id="guide-box" style="display:none">
+    <div class="card-t" id="guide-title">📖 Rehber</div>
+    <div id="guide-text"></div>
+  </div>
+</div>
+
+<!-- TAB 8: ÇIKTI -->
+<div class="tab" id="tab-8">
+  <div class="card no-print">
+    <div class="card-t">📤 Paylaşım & Çıktı</div>
+    <div class="actgrid">
+      <div class="actbtn" onclick="window.print()"><div class="ic">🖨️</div><span data-lk="btn.print">Yazdır</span></div>
+      <div class="actbtn" onclick="shareApp()"><div class="ic">🔗</div><span data-lk="btn.share">Paylaş</span></div>
+      <div class="actbtn" onclick="openWA()"><div class="ic">💬</div><span data-lk="btn.wa">Uzmana Sor</span></div>
+      <div class="actbtn" onclick="exportCSV()"><div class="ic">📊</div><span data-lk="btn.csv">Excel/CSV</span></div>
+      <div class="actbtn" onclick="copyText()"><div class="ic">📋</div><span data-lk="btn.copy">Kopyala</span></div>
+      <div class="actbtn" onclick="installPWA()"><div class="ic">📱</div><span data-lk="btn.inst">Ana Ekrana</span></div>
+    </div>
+  </div>
+  <div class="card" id="sum-card">
+    <div class="card-t">📋 Proje Özeti</div>
+    <div id="sum-content"><div style="padding:20px;text-align:center;color:var(--text3);font-size:12px">Proje bilgilerini girerek özeti görüntüleyin</div></div>
+  </div>
+  <div class="card">
+    <div class="card-t">📅 Proje Zaman Planı <span style="background:var(--bdim);color:var(--blue);border-radius:4px;font-size:8px;padding:1px 5px;font-weight:700;margin-left:4px">AUTO</span></div>
+    <div id="tl-content"><div style="padding:16px;text-align:center;color:var(--text3);font-size:11px">Simülatör Pro'dan süre alınır</div></div>
+  </div>
+</div>
+
+</div><!-- /main -->
+
+<div class="bnav">
+  <div class="ni on" onclick="goTab(0)" id="ni-0"><div class="ic">📋</div><div class="lb">Proje</div><div class="ni-dot"></div></div>
+  <div class="ni" onclick="goTab(1)" id="ni-1"><div class="ic">🏘️</div><div class="lb">Yapı</div><div class="ni-dot"></div></div>
+  <div class="ni" onclick="goTab(2)" id="ni-2"><div class="ic">🎯</div><div class="lb">Opt.</div><div class="ni-dot"></div></div>
+  <div class="ni" onclick="goTab(3)" id="ni-3"><div class="ic">🏗️</div><div class="lb">Kesit</div><div class="ni-dot"></div></div>
+  <div class="ni" onclick="goTab(4)" id="ni-4"><div class="ic">🗺️</div><div class="lb">Harita</div><div class="ni-dot"></div></div>
+  <div class="ni" onclick="goTab(5)" id="ni-5"><div class="ic">📊</div><div class="lb">Analiz</div><div class="ni-dot"></div></div>
+  <div class="ni" onclick="goTab(6)" id="ni-6"><div class="ic">🎮</div><div class="lb">Sim</div><div class="ni-dot"></div></div>
+  <div class="ni" onclick="goTab(7)" id="ni-7"><div class="ic">📚</div><div class="lb">Rehber</div><div class="ni-dot"></div></div>
+  <div class="ni" onclick="goTab(8)" id="ni-8"><div class="ic">📤</div><div class="lb">Çıktı</div><div class="ni-dot"></div></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+// ── STATE ──
+const S={lang:'tr',theme:'dark',mode:'simple',bType:'konut',parsel:0,taks:.4,kaks:2,katSayisi:0,tabanAlan:0,toplamInsaat:0,netAlan:0,arsaPct:40,ticariOran:20,satisFiyat:50000,insMaliyet:12000,daireSayisi:0,proSure:24,rotY:0,map:null,marker:null,installEvt:null};
+
+// ── İL/İLÇE DATA ──
+const ILD={
+  "Adana":["Aladağ","Ceyhan","Çukurova","Feke","İmamoğlu","Karaisalı","Karataş","Kozan","Pozantı","Saimbeyli","Sarıçam","Seyhan","Tufanbeyli","Yumurtalık","Yüreğir"],
+  "Ankara":["Altındağ","Çankaya","Etimesgut","Gölbaşı","Keçiören","Mamak","Pursaklar","Sincan","Yenimahalle","Polatlı","Beypazarı","Çubuk"],
+  "Antalya":["Alanya","Aksu","Döşemealtı","Kemer","Kepez","Konyaaltı","Kumluca","Manavgat","Muratpaşa","Serik","Gazipaşa"],
+  "Bursa":["Büyükorhan","Gemlik","Gürsu","İnegöl","Kestel","Mudanya","Nilüfer","Osmangazi","Yenişehir","Yıldırım"],
+  "Gaziantep":["Araban","İslahiye","Nizip","Oğuzeli","Şahinbey","Şehitkamil","Yavuzeli"],
+  "İstanbul":["Adalar","Arnavutköy","Ataşehir","Avcılar","Bağcılar","Bahçelievler","Bakırköy","Başakşehir","Bayrampaşa","Beşiktaş","Beykoz","Beylikdüzü","Beyoğlu","Büyükçekmece","Çekmeköy","Esenler","Esenyurt","Eyüpsultan","Fatih","Güngören","Kadıköy","Kağıthane","Kartal","Küçükçekmece","Maltepe","Pendik","Sancaktepe","Sarıyer","Şişli","Tuzla","Ümraniye","Üsküdar","Zeytinburnu"],
+  "İzmir":["Aliağa","Balçova","Bayındır","Bayraklı","Bergama","Bornova","Buca","Çeşme","Çiğli","Gaziemir","Karabağlar","Karşıyaka","Kemalpaşa","Konak","Menemen","Narlıdere","Torbalı","Urla"],
+  "Kayseri":["Develi","Hacılar","Kocasinan","Melikgazi","Talas","Tomarza","Yahyalı"],
+  "Konya":["Karatay","Meram","Selçuklu","Ereğli","Akşehir","Beyşehir","Seydişehir"],
+  "Mersin":["Akdeniz","Erdemli","Mezitli","Silifke","Tarsus","Toroslar","Yenişehir"],
+  "Trabzon":["Akçaabat","Araklı","Maçka","Of","Ortahisar","Sürmene","Vakfıkebir","Yomra"],
+  "Sakarya":["Adapazarı","Akyazı","Hendek","Karasu","Sapanca","Serdivan","Söğütlü"],
+  "Kocaeli":["Başiskele","Çayırova","Darıca","Gebze","Gölcük","İzmit","Kartepe","Körfez"],
+  "Balıkesir":["Altıeylül","Bandırma","Burhaniye","Edremit","İvrindi","Karesi","Susurluk"],
+  "Muğla":["Bodrum","Dalaman","Datça","Fethiye","Marmaris","Menteşe","Milas","Ortaca","Seydikemer"],
+  "Diyarbakır":["Bağlar","Bismil","Çermik","Ergani","Kayapınar","Sur","Yenişehir"],
+  "Erzurum":["Aziziye","Horasan","İspir","Oltu","Palandöken","Yakutiye"],
+  "Eskişehir":["Odunpazarı","Tepebaşı","Çifteler","İnönü","Mihalıççık","Sivrihisar"],
+  "Hatay":["Antakya","Dörtyol","İskenderun","Kırıkhan","Reyhanlı","Samandağ"],
+  "Malatya":["Battalgazi","Darende","Doğanşehir","Pütürge","Yeşilyurt"],
+  "Samsun":["Atakum","Canik","İlkadım","Terme","Bafra","Tekkeköy"],
+  "Şanlıurfa":["Eyyübiye","Halfeti","Harran","Hilvan","Karaköprü","Siverek"],
+  "Van":["Edremit","Erciş","İpekyolu","Muradiye","Tuşba"],
+  "Sivas":["Divriği","Kangal","Şarkışla","Suşehri","Yıldızeli"],
+  "Kastamonu":["Abana","Araç","Cide","İnebolu","Küre","Tosya"],
+  "Manisa":["Akhisar","Alaşehir","Saruhanlı","Soma","Turgutlu","Yunusemre"]
+};
+
+function loadIlData(){
+  const sel=document.getElementById('il-sel');
+  sel.innerHTML='<option value="">İl seçin...</option>';
+  Object.keys(ILD).sort().forEach(il=>sel.innerHTML+=`<option value="${il}">${il}</option>`);
+}
+function loadIlce(){
+  const il=document.getElementById('il-sel').value;
+  const sel=document.getElementById('ilce-sel');
+  sel.innerHTML='<option value="">İlçe seçin...</option>';
+  if(ILD[il])ILD[il].forEach(i=>sel.innerHTML+=`<option value="${i}">${i}</option>`);
+  syncMapQ();
+}
+function syncMapQ(){
+  const il=document.getElementById('il-sel').value,ilce=document.getElementById('ilce-sel').value;
+  document.getElementById('map-q').value=[il,ilce].filter(Boolean).join(', ');
+}
+
+// ── NAV ──
+let cur=0;
+function goTab(n){
+  document.getElementById('tab-'+cur).classList.remove('on');
+  document.getElementById('ni-'+cur).classList.remove('on');
+  cur=n;
+  document.getElementById('tab-'+n).classList.add('on');
+  document.getElementById('ni-'+n).classList.add('on');
+  if(n===3)renderSection();
+  if(n===4)initMap();
+  if(n===5){genSWOT();calcROI();}
+  if(n===8){renderSummary();renderTimeline();}
+}
+
+// ── THEME/LANG/MODE ──
+function toggleTheme(){S.theme=S.theme==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',S.theme);document.getElementById('theme-btn').textContent=S.theme==='dark'?'🌙':'☀️';if(cur===3)renderSection();}
+function toggleLang(){
+  S.lang=S.lang==='tr'?'en':'tr';
+  document.getElementById('lang-btn').textContent=S.lang.toUpperCase();
+  document.documentElement.setAttribute('lang',S.lang);
+  applyLang();
+  toast(S.lang==='en'?'🇬🇧 English mode':'🇹🇷 Türkçe mod');
+}
+const LM={
+  tr:{
+    n0:'Proje',n1:'Yapı',n2:'Opt.',n3:'Kesit',n4:'Harita',n5:'Analiz',n6:'Sim',n7:'Rehber',n8:'Çıktı',
+    'h.proj':'Proje adı girin...',
+    'btn.save':'💾 Kaydet & Güncelle','btn.kk':'🧮 Hesapla','btn.opt':'⚡ Optimize Et',
+    'btn.roi':'📈 ROI Hesapla','btn.pro':'⚡ Detaylı Analizi Hesapla',
+    'btn.swot':'🔄 Güncelle','btn.cur':'🔄 Güncelle',
+    'btn.print':'🖨️ Yazdır','btn.share':'🔗 Paylaş','btn.wa':'💬 Uzmana Sor',
+    'btn.csv':'📊 Excel/CSV','btn.copy':'📋 Kopyala','btn.inst':'📱 Ana Ekrana',
+    'ct0':'📋 Proje & Parsel Bilgileri','ct0c':'📊 Temel Hesaplar',
+    'ct1':'🏘️ Yapı Kullanım Tipi','ct1o':'⚖️ Ticari / Konut Oranı','ct1k':'🤝 Kat Karşılığı Hesabı',
+    'ct2':'🎯 Daire Dağılımı Optimizer','ct2r':'✅ Optimum Dağılım',
+    'ct3':'🏗️ Bina Kesit Görünümü','ct3f':'📐 Kat Listesi',
+    'ct5':'📊 SWOT Analizi','ct5r':'💰 Yatırım Getiri Analizi (ROI)','ct5c':'💱 Canlı Döviz Kurları',
+    'ct6a':'🟢 Anlık Simülasyon','ct6b':'⚡ Pro Finansal Analiz',
+    'ct7':'📚 İnşaat Rehberi',
+    'ct8':'📤 Paylaşım & Çıktı','ct8s':'📋 Proje Özeti','ct8t':'📅 Proje Zaman Planı',
+    'swot.s':'💪 GÜÇLÜ','swot.w':'⚠️ ZAYIF','swot.o':'🚀 FIRSAT','swot.t':'🎯 TEHDİT',
+    'lbl.sure':'Yapım Süresi (ay)','lbl.satis.sure':'Satış Süresi (ay)',
+    'lbl.faiz':'Faiz Oranı (%/yıl)','lbl.enf':'Enflasyon (%/yıl)',
+    'lbl.ruhsat':'Ruhsat & İzin (₺)','lbl.paz':'Pazarlama (%)',
+    'sec.zaman':'📅 ZAMAN & FİNANSMAN','sec.makro':'📈 MAKROEKONOMİK','sec.sabit':'💸 SABİT GİDERLER',
+    'sim.note':'Kaydırarak anında sonuç görün — proje verisi gerekmez.',
+    'sim.note2':'Enflasyon, faiz ve pazarlama maliyetleri dahil — gerçekçi proje kâr/zarar analizi.',
+    'sl.insaat':'Toplam m²','sl.kat':'Kat Sayısı','sl.taban':'Taban m²',
+    'sl.net':'Net Satış m²','sl.yuk':'Bina Yük. m','sl.daire':'~Daire Sayısı',
+    'sl.alan':'İnşaat m²','sl.d':'~Daire','sl.gelir':'Brüt Gelir','sl.kar':'Net Kâr','sl.margin':'Kâr Marjı',
+    'sum.empty':'Proje bilgilerini girerek özeti görüntüleyin',
+    'tl.note':'Simülatör Pro\'dan süre alınır',
+    'map.ph':'İl, İlçe, Mahalle...',
+    'ph.proje':'Örn: Bağcılar Karma Proje','ph.mah':'Mahalle adı',
+    'mode.s':'🟢 BASİT','mode.e':'🎓 UZMAN',
+    'cur.loading':'⏳ Yükleniyor...',
+    'cur.upd':'Son güncelleme:',
+    'inst.note':'Ana ekrana kısayol olarak ekleniyor. Gerçek uygulama kurulumu için Chrome → Paylaş → "Ana Ekrana Ekle" seçin.'
+  },
+  en:{
+    n0:'Project',n1:'Build',n2:'Opt.',n3:'Section',n4:'Map',n5:'Analysis',n6:'Sim',n7:'Guide',n8:'Output',
+    'h.proj':'Enter project name...',
+    'btn.save':'💾 Save & Update','btn.kk':'🧮 Calculate','btn.opt':'⚡ Optimize',
+    'btn.roi':'📈 Calculate ROI','btn.pro':'⚡ Run Pro Analysis',
+    'btn.swot':'🔄 Refresh','btn.cur':'🔄 Refresh',
+    'btn.print':'🖨️ Print','btn.share':'🔗 Share','btn.wa':'💬 Ask Expert',
+    'btn.csv':'📊 Excel/CSV','btn.copy':'📋 Copy','btn.inst':'📱 Add to Home',
+    'ct0':'📋 Project & Parcel Info','ct0c':'📊 Basic Results',
+    'ct1':'🏘️ Building Type','ct1o':'⚖️ Commercial / Residential Ratio','ct1k':'🤝 Floor Exchange',
+    'ct2':'🎯 Unit Mix Optimizer','ct2r':'✅ Optimal Distribution',
+    'ct3':'🏗️ Building Section View','ct3f':'📐 Floor List',
+    'ct5':'📊 SWOT Analysis','ct5r':'💰 ROI Analysis','ct5c':'💱 Live Exchange Rates',
+    'ct6a':'🟢 Quick Simulation','ct6b':'⚡ Pro Financial Analysis',
+    'ct7':'📚 Construction Guide',
+    'ct8':'📤 Share & Export','ct8s':'📋 Project Summary','ct8t':'📅 Project Timeline',
+    'swot.s':'💪 STRENGTHS','swot.w':'⚠️ WEAKNESSES','swot.o':'🚀 OPPORTUNITIES','swot.t':'🎯 THREATS',
+    'lbl.sure':'Build Duration (mo)','lbl.satis.sure':'Sales Duration (mo)',
+    'lbl.faiz':'Interest Rate (%/yr)','lbl.enf':'Inflation (%/yr)',
+    'lbl.ruhsat':'Permits & Fees (₺)','lbl.paz':'Marketing (%)',
+    'sec.zaman':'📅 TIME & FINANCING','sec.makro':'📈 MACROECONOMIC','sec.sabit':'💸 FIXED COSTS',
+    'sim.note':'Adjust sliders for instant results — no project data needed.',
+    'sim.note2':'Includes inflation, interest & marketing costs — realistic P&L analysis.',
+    'sl.insaat':'Total m²','sl.kat':'Floors','sl.taban':'Footprint m²',
+    'sl.net':'Net Sellable m²','sl.yuk':'Building Height m','sl.daire':'~Unit Count',
+    'sl.alan':'Build m²','sl.d':'~Units','sl.gelir':'Gross Revenue','sl.kar':'Net Profit','sl.margin':'Margin',
+    'sum.empty':'Enter project data to view summary',
+    'tl.note':'Duration taken from Pro Simulator',
+    'map.ph':'Province, District, Neighborhood...',
+    'ph.proje':'E.g. Mixed-Use Project','ph.mah':'Neighborhood',
+    'mode.s':'🟢 SIMPLE','mode.e':'🎓 EXPERT',
+    'cur.loading':'⏳ Loading...',
+    'cur.upd':'Last updated:',
+    'inst.note':'Adding as a home screen shortcut. For true app install, use Chrome → Share → "Add to Home Screen".'
+  }
+};
+function T(k){return (LM[S.lang]||LM.tr)[k]||(LM.tr)[k]||k;}
+function applyLang(){
+  // Nav labels
+  for(let i=0;i<=8;i++){const e=document.querySelector('#ni-'+i+' .lb');if(e)e.textContent=T('n'+i);}
+  // Elements with data-lk attribute
+  document.querySelectorAll('[data-lk]').forEach(el=>el.textContent=T(el.getAttribute('data-lk')));
+  // Placeholders
+  document.querySelectorAll('[data-lkp]').forEach(el=>el.placeholder=T(el.getAttribute('data-lkp')));
+  // SWOT headers
+  const sw={s:'swot.s',w:'swot.w',o:'swot.o',t:'swot.t'};
+  Object.entries(sw).forEach(([k,v])=>{const e=document.querySelector('.sw.'+k+' .sw-t');if(e)e.textContent=T(v);});
+}
+function toggleMode(){S.mode=S.mode==='simple'?'uzman':'simple';document.getElementById('mode-btn').textContent=S.mode==='simple'?'🎓 UZMAN':'🟢 BASİT';toast(S.mode==='uzman'?'🎓 Uzman mod aktif':'🟢 Basit mod aktif');}
+
+// ── UTILS ──
+function fN(n){return Math.round(n).toLocaleString('tr-TR');}
+function fM(n){if(n>=1e9)return (n/1e9).toFixed(2)+' Mlr ₺';if(n>=1e6)return (n/1e6).toFixed(2)+' Mn ₺';if(n>=1e3)return (n/1e3).toFixed(0)+'K ₺';return n.toFixed(0)+' ₺';}
+function toast(m){const el=document.getElementById('toast');el.textContent=m;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2500);}
+
+// ── CALCULATE ──
+function calculate(){
+  S.parsel=parseFloat(document.getElementById('parsel-alan').value)||0;
+  S.taks=parseFloat(document.getElementById('taks').value)||.4;
+  S.kaks=parseFloat(document.getElementById('kaks').value)||2;
+  const kY=parseFloat(document.getElementById('kat-y').value)||3;
+  const op=parseFloat(document.getElementById('ortak-pct')||{value:25}).value||25;
+  S.toplamInsaat=S.parsel*S.kaks;
+  S.tabanAlan=S.parsel*S.taks;
+  S.katSayisi=Math.max(1,Math.round(S.kaks/S.taks));
+  S.netAlan=S.toplamInsaat*(1-op/100);
+  S.daireSayisi=Math.max(0,Math.round(S.netAlan/90));
+  if(S.parsel>0){
+    document.getElementById('calc-card').style.display='';
+    document.getElementById('r-insaat').textContent=fN(S.toplamInsaat);
+    document.getElementById('r-kat').textContent=S.katSayisi;
+    document.getElementById('r-taban').textContent=fN(S.tabanAlan);
+    document.getElementById('r-net').textContent=fN(S.netAlan);
+    document.getElementById('r-h').textContent=(S.katSayisi*kY).toFixed(1);
+    document.getElementById('r-daire').textContent=S.daireSayisi;
+    calcKK(); runOpt();
+  }
+}
+function updateProjName(){const v=document.getElementById('proje-adi').value;document.getElementById('h-proj').textContent=v||'Proje adı girin...';}
+function saveData(){calculate();toast('💾 Kaydedildi!');}
+
+// ── YAPI TİPİ ──
+function selType(t,el){S.bType=t;document.querySelectorAll('.tc').forEach(c=>c.classList.remove('sel'));el.classList.add('sel');const show=['karma','giris-ticari'].includes(t);document.getElementById('oran-card').style.display=show?'':'none';if(cur===3)renderSection();}
+
+// ── KAT KARŞILIĞI ──
+function updArsa(v){S.arsaPct=+v;document.getElementById('arsa-pct-v').textContent='%'+v;document.getElementById('mut-pct').textContent='%'+(100-v);calcKK();}
+function calcKK(){
+  const sf=parseFloat(document.getElementById('satis-fiyat').value)||50000;
+  const mc=parseFloat(document.getElementById('ins-maliyet').value)||12000;
+  const op=parseFloat(document.getElementById('ortak-pct').value)||25;
+  const avgM2=parseFloat(document.getElementById('avg-m2').value)||90;
+  S.satisFiyat=sf;S.insMaliyet=mc;
+  if(S.toplamInsaat<=0)return;
+  const net=S.toplamInsaat*(1-op/100);
+  const topGelir=net*sf;
+  const topMal=S.toplamInsaat*mc;
+  const aP=S.arsaPct/100;
+  const arsaV=topGelir*aP;
+  const mutGelir=topGelir*(1-aP);
+  const mutNet=mutGelir-topMal;
+  const kar=topGelir>0?((mutNet/(topMal+arsaV))*100):0;
+  const topD=Math.round(net/avgM2);
+  S.daireSayisi=topD;
+  const arsaD=Math.round(topD*aP);
+  document.getElementById('kk-res').style.display='';
+  document.getElementById('kk-arsa-d').textContent=arsaD+' ad.';
+  document.getElementById('kk-mut-d').textContent=(topD-arsaD)+' ad.';
+  document.getElementById('kk-kar').textContent='%'+kar.toFixed(1);
+  document.getElementById('kk-gelir').textContent=fM(topGelir);
+  document.getElementById('kk-net').textContent=fM(mutNet);
+  document.getElementById('kk-arsav').textContent=fM(arsaV);
+}
+
+// ── OPTİMİZER ──
+const APTS=[
+  {id:'Stüdyo',area:45,vm:1.22,en:false,max:20},
+  {id:'1+1',area:60,vm:1.15,en:true,max:30},
+  {id:'2+1',area:90,vm:1.0,en:true,max:40},
+  {id:'3+1',area:120,vm:0.88,en:true,max:25},
+  {id:'4+1',area:160,vm:0.75,en:false,max:10},
+];
+function renderAptCfg(){
+  document.getElementById('apt-cfg').innerHTML=APTS.map((a,i)=>`
+    <div class="arow">
+      <input type="checkbox" ${a.en?'checked':''} onchange="APTS[${i}].en=this.checked;runOpt()">
+      <span class="abadge">${a.id}</span>
+      <div class="ainfo"><div class="atype">${a.area}m² · ×${a.vm} değer</div>
+      <div class="adet">Max: <input type="number" value="${a.max}" style="width:46px;display:inline;padding:2px 5px;font-size:11px" oninput="APTS[${i}].max=+this.value||0;runOpt()"> adet</div></div>
+    </div>`).join('');
+}
+function runOpt(){
+  const op=parseFloat(document.getElementById('opt-ortak').value)||25;
+  const net=S.toplamInsaat*(1-op/100);
+  if(net<=0)return;
+  const goal=document.getElementById('opt-goal').value;
+  const sf=S.satisFiyat||50000;
+  const en=APTS.filter(a=>a.en);
+  let rem=net;const res={};en.forEach(a=>res[a.id]=0);
+  const sm={value:(a,b)=>(sf*b.vm/b.area)-(sf*a.vm/a.area),units:(a,b)=>a.area-b.area,balanced:(a,b)=>a.area-b.area};
+  const sorted=[...en].sort(sm[goal]);
+  if(goal==='balanced'){
+    const perT=Math.floor(net/(en.reduce((s,a)=>s+a.area,0)||1));
+    en.forEach(a=>{const c=Math.min(perT,a.max,Math.floor(rem/a.area));res[a.id]=c;rem-=c*a.area;});
+    const fill=en.find(a=>a.id==='2+1')||en[0];
+    if(fill&&rem>=fill.area){const ex=Math.min(Math.floor(rem/fill.area),fill.max-res[fill.id]);res[fill.id]+=ex;}
+  } else {
+    sorted.forEach(apt=>{const c=Math.min(Math.floor(rem/apt.area),apt.max);res[apt.id]=c;rem-=c*apt.area;});
+  }
+  let tU=0,tA=0,tV=0;
+  en.forEach(a=>{tU+=res[a.id];tA+=res[a.id]*a.area;tV+=res[a.id]*a.area*sf*a.vm;});
+  S.daireSayisi=tU;
+  document.getElementById('opt-res').style.display='';
+  document.getElementById('opt-list').innerHTML=en.map(a=>`
+    <div class="arow">
+      <span class="abadge">${a.id}</span>
+      <div class="ainfo"><div class="atype">${a.area}m² · ${fM(a.area*sf*a.vm)}/daire</div>
+      <div class="adet">${fM(res[a.id]*a.area*sf*a.vm)} toplam</div></div>
+      <div class="acnt">${res[a.id]}</div>
+    </div>`).join('');
+  document.getElementById('opt-sum').innerHTML=`
+    <div class="sc"><div class="sv">${tU}</div><div class="sl">Toplam Daire</div></div>
+    <div class="sc"><div class="sv blue">${fN(tA)}</div><div class="sl">m²</div></div>
+    <div class="sc"><div class="sv green" style="font-size:11px">${fM(tV)}</div><div class="sl">Tahmini Değer</div></div>`;
+}
+
+// ── KESİT ──
+function renderSection(){
+  const canvas=document.getElementById('section-canvas');
+  if(!canvas)return;
+  const ctx=canvas.getContext('2d');
+  const dpr=window.devicePixelRatio||1;
+  const W=canvas.parentElement.offsetWidth-28;
+  const H=Math.min(W*.68,380);
+  canvas.width=W*dpr;canvas.height=H*dpr;
+  canvas.style.width=W+'px';canvas.style.height=H+'px';
+  ctx.scale(dpr,dpr);
+  const isDark=document.documentElement.getAttribute('data-theme')==='dark';
+  ctx.fillStyle=isDark?'#111827':'#f5f7fc';ctx.fillRect(0,0,W,H);
+  const floors=S.katSayisi||5;
+  const rot=S.rotY||0;
+  const rotFactor=Math.abs(rot)/75; // 0..1
+  // rotY<0 = view from left; >0 = view from right
+  const sideW=W*0.18*rotFactor; // visible side wall width
+  const bwScale=1-rotFactor*0.35;
+  const BW=W*0.56*bwScale,BX=(W-BW)/2+(rot>0?-sideW/2:sideW/2),GY=H-24;
+  const FH=Math.min((GY-14)/(floors+1.5),38);
+  const BH=floors*FH,BY=GY-BH;
+  // Update rotation label
+  const rl=document.getElementById('rot-lbl');if(rl)rl.textContent=rot+'°';
+  // Ground line
+  ctx.fillStyle=isDark?'#374151':'#9ca3af';ctx.fillRect(0,GY,W,3);
+  // Shadow
+  ctx.fillStyle='rgba(0,0,0,0.18)';ctx.fillRect(BX+5,BY+5,BW,BH);
+  // Basement
+  ctx.fillStyle='#374151';ctx.fillRect(BX-6,GY+2,BW+12,FH*0.85);
+  ctx.fillStyle='rgba(255,255,255,.5)';ctx.font=`bold ${Math.min(FH*.3,9)}px DM Sans,sans-serif`;ctx.textAlign='center';
+  ctx.fillText('⬇ Otopark / Bodrum',BX+BW/2,GY+FH*0.55);
+  // Floors
+  for(let i=0;i<floors;i++){
+    const fn=floors-i,y=BY+i*FH,persp=i*0.35;
+    let col='#3b82f6';
+    if(S.bType==='ticari')col='#f59e0b';
+    else if(S.bType==='ofis')col='#8b5cf6';
+    else if(S.bType==='sanayi')col='#6b7280';
+    else if(S.bType==='giris-ticari')col=fn===1?'#f59e0b':'#3b82f6';
+    else if(S.bType==='karma'){const tk=Math.ceil(floors*S.ticariOran/100);col=fn<=tk?'#f59e0b':'#3b82f6';}
+    ctx.fillStyle='rgba(0,0,0,.15)';ctx.fillRect(BX-persp+2,y+2,BW+persp,FH-2);
+    ctx.fillStyle=col;ctx.fillRect(BX-persp,y,BW+persp,FH-2);
+    ctx.fillStyle='rgba(255,255,255,.1)';ctx.fillRect(BX-persp,y,BW+persp,FH*0.28);
+    const wC=Math.max(2,Math.floor(BW/28));
+    for(let w=0;w<wC;w++){ctx.fillStyle='rgba(255,255,255,.2)';const wx=BX-persp+8+w*(BW/wC);ctx.fillRect(wx,y+FH*.2,BW/wC-5,FH*.5);}
+    ctx.fillStyle='rgba(0,0,0,.2)';ctx.fillRect(BX-persp,y+FH-2,BW+persp,2);
+    ctx.fillStyle='rgba(255,255,255,.9)';ctx.font=`700 ${Math.min(FH*.3,9)}px DM Sans,sans-serif`;ctx.textAlign='left';
+    ctx.fillText(`${fn}. Kat`,BX-persp+4,y+FH*.65);
+    ctx.textAlign='right';
+    const lbl=S.bType==='ticari'?'🏢':S.bType==='ofis'?'💼':S.bType==='sanayi'?'🏭':S.bType==='karma'&&fn<=Math.ceil(floors*S.ticariOran/100)?'🏢':fn===1?'🚪':'🏠';
+    ctx.fillText(lbl,BX+BW-3,y+FH*.65);
+  }
+  // Side wall (when rotated)
+  if(Math.abs(rot)>3){
+    const swColor=rot>0?'rgba(59,130,246,0.35)':'rgba(245,158,11,0.25)';
+    const swX=rot>0?BX+BW:BX-sideW;
+    const dir=rot>0?1:-1;
+    for(let i=0;i<floors;i++){
+      const y=BY+i*FH;
+      ctx.fillStyle=swColor;
+      ctx.beginPath();
+      ctx.moveTo(BX+BW,y);
+      ctx.lineTo(BX+BW+sideW*dir,y-4*rotFactor);
+      ctx.lineTo(BX+BW+sideW*dir,y+FH-2-4*rotFactor);
+      ctx.lineTo(BX+BW,y+FH-2);
+      ctx.closePath();ctx.fill();
+      ctx.strokeStyle='rgba(0,0,0,.2)';ctx.lineWidth=0.5;ctx.stroke();
+    }
+  }
+  ctx.fillStyle=isDark?'#4b5563':'#6b7280';
+  ctx.beginPath();ctx.moveTo(BX-10,BY);ctx.lineTo(BX+BW/2,BY-16);ctx.lineTo(BX+BW+10,BY);ctx.closePath();ctx.fill();
+  ctx.fillStyle=isDark?'#6b7280':'#9ca3af';ctx.font='10px DM Sans,sans-serif';ctx.textAlign='right';
+  const kY=parseFloat(document.getElementById('kat-y').value)||3;
+  ctx.fillText(`↕ ${(floors*kY).toFixed(1)}m`,BX-12,BY+BH/2);
+  ctx.textAlign='center';ctx.fillText(`← ${fN(S.tabanAlan||0)} m² →`,BX+BW/2,GY+13);
+  // Floor list
+  let html='';
+  for(let i=floors;i>=1;i--){
+    const col=S.bType==='ticari'?'#f59e0b':S.bType==='ofis'?'#8b5cf6':S.bType==='karma'&&i<=Math.ceil(floors*S.ticariOran/100)?'#f59e0b':S.bType==='giris-ticari'&&i===1?'#f59e0b':'#3b82f6';
+    const lbl=S.bType==='ticari'?'🏢 Ticari':S.bType==='ofis'?'💼 Ofis':S.bType==='sanayi'?'🏭 Sanayi':S.bType==='karma'&&i<=Math.ceil(floors*S.ticariOran/100)?'🏢 Ticari':S.bType==='giris-ticari'&&i===1?'🏪 Ticari Giriş':i===1?'🚪 Giriş / Lobi':'🏠 Konut';
+    html+=`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px"><span style="width:11px;height:11px;background:${col};border-radius:2px;flex-shrink:0"></span><span style="min-width:48px;font-weight:700;font-family:var(--fd);color:var(--text2)">${i}. Kat</span><span style="flex:1;color:var(--text)">${lbl}</span><span style="color:var(--primary);font-family:var(--fd);font-weight:700">${fN(S.tabanAlan)} m²</span></div>`;
+  }
+  html+=`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;font-size:12px"><span style="width:11px;height:11px;background:#374151;border-radius:2px;flex-shrink:0"></span><span style="min-width:48px;font-weight:700;font-family:var(--fd);color:var(--text2)">B Kat</span><span style="flex:1;color:var(--text)">🚗 Otopark</span><span style="color:var(--text3);font-family:var(--fd)">${fN(S.tabanAlan*.85)} m²</span></div>`;
+  document.getElementById('floor-list').innerHTML=html;
+}
+
+// ── MAP ──
+function initMap(){
+  if(S.map){S.map.invalidateSize();return;}
+  S.map=L.map('map').setView([39.9,32.8],6);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OSM'}).addTo(S.map);
+  S.map.on('click',e=>placeMarker(e.latlng.lat,e.latlng.lng));
+  S.map.on('moveend',updMapInfo);
+  updMapInfo();
+}
+function placeMarker(la,ln){
+  if(S.marker)S.map.removeLayer(S.marker);
+  S.marker=L.marker([la,ln]).addTo(S.map).bindPopup(`📍 ${la.toFixed(5)}, ${ln.toFixed(5)}`).openPopup();
+  document.getElementById('m-lat').textContent=la.toFixed(4);
+  document.getElementById('m-lng').textContent=ln.toFixed(4);
+}
+function updMapInfo(){if(!S.map)return;document.getElementById('m-zoom').textContent=S.map.getZoom();}
+function searchMap(){
+  const q=document.getElementById('map-q').value;if(!q)return;
+  if(!S.map){goTab(4);setTimeout(()=>doSearch(q),600);}else doSearch(q);
+}
+function doSearch(q){
+  fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q+', Türkiye')}`)
+    .then(r=>r.json()).then(d=>{if(d&&d[0]){S.map.setView([+d[0].lat,+d[0].lon],15);placeMarker(+d[0].lat,+d[0].lon);}else toast('❌ Konum bulunamadı');}).catch(()=>toast('❌ Hata'));
+}
+
+// ── SWOT ──
+function genSWOT(){
+  const margin=S.satisFiyat>0?(S.satisFiyat-S.insMaliyet)/S.satisFiyat*100:0;
+  const s=[],w=[],o=[],t=[];
+  if(S.parsel>=500)s.push('Geniş parsel – ölçek ekonomisi');
+  if(S.kaks>=2.5)s.push('Yüksek emsal – alan verimliliği');
+  if(margin>55)s.push('Yüksek brüt kâr marjı');
+  if(['karma','giris-ticari'].includes(S.bType))s.push('Karma kullanım – gelir çeşitliliği');
+  if(S.katSayisi>=8)s.push('Düşük arsa maliyeti payı/kat');
+  if(s.length===0)s.push('Proje verisi girildikçe güncellenir');
+  if(S.parsel<300)w.push('Küçük parsel – ölçek kısıtlı');
+  if(S.kaks<1.5)w.push('Düşük emsal – alan yetersizliği');
+  if(S.insMaliyet>20000)w.push('Yüksek inşaat maliyeti');
+  if(S.taks>0.5)w.push('Yüksek TAKS – yeşil alan az');
+  if(w.length===0)w.push('Belirgin zayıflık tespit edilmedi');
+  o.push('Kentsel dönüşüm teşvikleri');
+  if(S.bType!=='ticari')o.push('Konut kredisi talebi ivmesi');
+  o.push('Bölgesel değer artış potansiyeli');
+  if(S.kaks<3)o.push('İmar revizyonu ile emsal artırımı');
+  t.push('Enflasyon – maliyet artış riski');
+  t.push('Faiz dalgalanması – talep baskısı');
+  if(S.katSayisi>10)t.push('Yüksek bina – ek statik gereksinim');
+  t.push('Ruhsat süreci gecikme riski');
+  const ri=arr=>arr.map(i=>`<div class="sw-i">• ${i}</div>`).join('');
+  document.getElementById('sw-s').innerHTML=ri(s);
+  document.getElementById('sw-w').innerHTML=ri(w);
+  document.getElementById('sw-o').innerHTML=ri(o);
+  document.getElementById('sw-t').innerHTML=ri(t);
+}
+
+// ── ROI ──
+function calcROI(){
+  const arsa=parseFloat(document.getElementById('arsa-deger').value)||0;
+  const diger=parseFloat(document.getElementById('diger-gider').value)||0;
+  const insMal=S.toplamInsaat*S.insMaliyet;
+  const topMal=arsa+insMal+diger;
+  const mutGelir=S.toplamInsaat*0.75*S.satisFiyat*(1-S.arsaPct/100);
+  if(topMal<=0)return;
+  const roi=((mutGelir-topMal)/topMal)*100;
+  document.getElementById('roi-res').style.display='';
+  document.getElementById('roi-mal').textContent=fM(topMal);
+  document.getElementById('roi-gel').textContent=fM(mutGelir);
+  const el=document.getElementById('roi-pct');
+  el.textContent=roi.toFixed(1)+'%';
+  el.className='sv'+(roi>30?' green':roi>10?'':' red');
+  const pct=Math.min(Math.max(roi,0),100);
+  const bar=document.getElementById('roi-bar');
+  bar.style.width=pct+'%';
+  bar.style.background=roi>30?'var(--green)':roi>10?'var(--primary)':'var(--red)';
+  document.getElementById('roi-note').textContent=roi>30?'✅ Güçlü getiri':roi>10?'⚠️ Orta getiri':'❌ Düşük getiri';
+}
+
+// ── SIMULATOR ──
+function simUpd(){
+  const p=+document.getElementById('s-parsel').value;
+  const k=parseFloat(document.getElementById('s-kaks').value);
+  const f=+document.getElementById('s-fiyat').value;
+  const mEl=document.getElementById('s-maliyet');
+  const m=mEl?+mEl.value:12000;
+  document.getElementById('s-pv').textContent=p;
+  document.getElementById('s-kv').textContent=k.toFixed(1);
+  document.getElementById('s-fv').textContent=f>=1000?(f/1000).toFixed(0)+'K':f;
+  const smv=document.getElementById('s-mv');if(smv)smv.textContent=m>=1000?(m/1000).toFixed(0)+'K':m;
+  const alan=p*k,net=alan*0.75,daire=Math.round(net/90);
+  const gelir=net*f,maliyet=alan*m,kar=gelir-maliyet;
+  const margin=gelir>0?((kar/gelir)*100):0;
+  document.getElementById('s-alan').textContent=fN(alan);
+  document.getElementById('s-daire').textContent=daire;
+  document.getElementById('s-gelir').textContent=fM(gelir);
+  const ke=document.getElementById('s-kar');if(ke)ke.textContent=fM(kar);
+  const me=document.getElementById('s-margin');if(me){me.textContent=margin.toFixed(0)+'%';me.className='sv'+(margin>40?' green':margin>20?'':' red');}
+}
+function calcPro(){
+  const sure=+document.getElementById('p-sure').value||24;
+  const faiz=+document.getElementById('p-faiz').value||35;
+  const sSure=+document.getElementById('p-satis').value||12;
+  const enf=+document.getElementById('p-enf').value||40;
+  const ruhsat=+document.getElementById('p-ruhsat').value||200000;
+  const paz=+document.getElementById('p-paz').value||3;
+  if(S.toplamInsaat<=0){toast('⚠️ Önce proje bilgilerini girin!');return;}
+  S.proSure=sure;
+  const baseMal=S.toplamInsaat*S.insMaliyet;
+  const enfF=Math.pow(1+enf/100,sure/12);
+  const gercekMal=baseMal*enfF;
+  const faizMal=gercekMal*(faiz/100)*(sure/12);
+  const pazMal=S.toplamInsaat*0.75*S.satisFiyat*(paz/100);
+  const topGider=gercekMal+faizMal+pazMal+ruhsat;
+  const sfEnd=S.satisFiyat*Math.pow(1+enf/100,(sure+sSure)/12);
+  const topGelir=S.toplamInsaat*0.75*sfEnd*(1-S.arsaPct/100);
+  const netKar=topGelir-topGider;
+  const roi=(netKar/topGider)*100;
+  document.getElementById('pro-res').style.display='';
+  document.getElementById('pro-content').innerHTML=`
+    <div class="srow">
+      <div class="sc"><div class="sv red" style="font-size:11px">${fM(topGider)}</div><div class="sl">Toplam Gider</div></div>
+      <div class="sc"><div class="sv green" style="font-size:11px">${fM(topGelir)}</div><div class="sl">Toplam Gelir</div></div>
+      <div class="sc"><div class="sv ${netKar>0?'green':'red'}">${roi.toFixed(1)}%</div><div class="sl">Net ROI</div></div>
+    </div>
+    <div style="font-size:11px;color:var(--text2);line-height:1.9;margin-top:6px">
+      📅 Toplam proje süresi: <b>${sure+sSure} ay</b><br>
+      💹 Enflasyon faktörü: <b>×${enfF.toFixed(2)}</b><br>
+      📊 Enflasyonlu satış fiyatı: <b>${fM(sfEnd)}/m²</b><br>
+      💰 Net kâr: <b style="color:${netKar>0?'var(--green)':'var(--red)'}">${fM(netKar)}</b>
+    </div>`;
+  if(cur===8)renderTimeline();
+}
+
+// ── TIMELINE ──
+function renderTimeline(){
+  const sure=S.proSure||24;
+  const phases=[
+    {label:'📋 Proje/Tasarım',pct:8,color:'#8b5cf6'},
+    {label:'🏛️ Ruhsat/İzin',pct:12,color:'#f59e0b'},
+    {label:'⛏️ Kazı & Temel',pct:10,color:'#ef4444'},
+    {label:'🏗️ Kaba İnşaat',pct:35,color:'#3b82f6'},
+    {label:'🔌 Tesisat & İç',pct:22,color:'#10b981'},
+    {label:'🎨 Boya & Finans',pct:8,color:'#06b6d4'},
+    {label:'🔑 Satış/Teslim',pct:5,color:'#22c55e'},
+  ];
+  let html=`<div style="font-size:10px;color:var(--text3);margin-bottom:9px">Toplam süre: <b style="color:var(--primary)">${sure} ay</b></div>`;
+  let cum=0;
+  phases.forEach(p=>{
+    const dur=Math.max(1,Math.round(sure*p.pct/100));
+    html+=`<div class="tl-ph"><div class="tl-lbl">${p.label}</div><div class="tl-bw"><div class="tl-b" style="width:${p.pct}%;background:${p.color};margin-left:${cum}%">${dur}ay</div></div><div class="tl-d">${cum+1}-${cum+dur}</div></div>`;
+    cum+=p.pct;
+  });
+  html+=`<div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text3);margin-top:3px"><span>0</span><span>${Math.round(sure/2)}. ay</span><span>${sure}. ay</span></div>`;
+  document.getElementById('tl-content').innerHTML=html;
+}
+
+// ── GUIDE ──
+const GUIDES={
+  taks:{t:'📏 TAKS (Taban Alan Katsayısı)',c:`TAKS, binanın taban alanının parsel alanına oranıdır.
+
+Formül: Taban Alanı = Parsel m² × TAKS
+
+Örnek: 500m² parselde TAKS=0.40 → 200m² taban alanı
+
+Tipik değerler:
+• Konut bölgesi:  0.20 – 0.40
+• Ticari bölge:   0.40 – 0.60
+• Sanayi bölgesi: 0.50 – 0.70
+
+Düşük TAKS = Daha fazla yeşil/açık alan
+Yüksek TAKS = Daha yoğun arsa kullanımı`},
+  kaks:{t:'📐 KAKS / Emsal',c:`KAKS, toplam inşaat alanının parsel alanına oranıdır.
+
+Formül: Toplam İnşaat = Parsel m² × KAKS
+Kat sayısı yaklaşık: KAKS ÷ TAKS
+
+Örnek: 500m² × 2.0 = 1.000m² toplam inşaat
+Kat sayısı: 2.0 ÷ 0.40 = 5 kat
+
+Yoğunluk seviyeleri:
+• Düşük yoğun:   0.5 – 1.0
+• Orta yoğun:    1.0 – 2.5
+• Yüksek yoğun:  2.5 – 4.0+`},
+  kk:{t:'🤝 Kat Karşılığı',c:`Arsa sahibi parseli müteahhite verir, karşılığında daire alır.
+
+Arsa sahibi için avantaj:
+• Nakit ödemesiz yapılaşma
+• Arsa değerini daire olarak realize etme
+
+Müteahhit için avantaj:
+• Arsa bedeli ödemeden proje geliştirme
+• Kaldıraçlı yatırım imkânı
+
+Tipik paylaşım oranları:
+• Arsa sahibi: %35 – %45
+• Müteahhit:   %55 – %65
+
+Oran; konum, emsal ve piyasaya göre değişir.`},
+  imar:{t:'📋 İmar Planı',c:`İmar planı, arazinin kullanımını belirleyen yasal belgedir.
+
+Plan türleri:
+• Nazım İmar Planı: Genel arazi kararları (1/5000)
+• Uygulama İmar Planı: Yapılaşma koşulları (1/1000)
+
+Temel kavramlar:
+• Yapı yaklaşma mesafesi: Parsel sınırına min. uzaklık
+• Bina derinliği: Maksimum bina derinliği
+• H kotu: Maksimum yapı yüksekliği
+• İmar adası: Yollarla çevrili yapı bloğu
+
+Değişiklik: Belediye Meclisi kararı gerektirir.`},
+  ruhsat:{t:'🏛️ Yapı Ruhsatı Süreci',c:`Adımlar:
+1. İmar durumu belgesi alınması
+2. Zemin etüt raporu hazırlanması
+3. Mimari, statik, M/E proje hazırlığı
+4. Belediyeye başvuru ve evrak teslimi
+5. Harç ve ücret ödemeleri
+6. Proje incelemesi ve onayı
+7. Yapı ruhsatının düzenlenmesi
+
+Temel belgeler:
+• Tapu fotokopisi
+• Mimari projeler (4 takım)
+• Zemin etüt raporu
+• Yapı denetim sözleşmesi
+• Proje müellif taahhütnameleri`},
+  deprem:{t:'🌍 Deprem Yönetmeliği (TBDY 2018)',c:`Bina önem sınıfları (BKS):
+• BKS-1: Kritik tesisler    (I=1.5)
+• BKS-2: Önemli binalar     (I=1.2)
+• BKS-3: Normal binalar     (I=1.0)
+• BKS-4: Geçici yapılar
+
+Deprem yer hareketi düzeyleri:
+• DD-1: 2500 yıl dönüş periyodu
+• DD-2: 475 yıl (tasarım esası)
+• DD-3: 72 yıl
+
+Yüksek bina (>70m): Performans bazlı tasarım zorunlu
+
+Zemin sınıfları: ZA'dan ZF'ye kadar 6 sınıf`},
+  arsa:{t:'🗺️ Arsa Değerleme',c:`Değeri etkileyen faktörler:
+
+Konum:
+• Merkeze yakınlık ve ulaşım
+• Çevre yapılaşma kalitesi
+• Altyapı durumu (yol, su, elektrik)
+
+İmar durumu:
+• KAKS/Emsal değeri
+• Kullanım kararı (konut/ticari)
+• Yapılaşma yoğunluğu
+
+Değerleme yöntemleri:
+• Emsal karşılaştırma
+• Geliştirme değeri yöntemi
+• Gelir kapitalizasyonu
+
+Pratik formül:
+Arsa Değeri ≈ Emsal × m² birim fiyatı × Konum katsayısı`},
+  sozlesme:{t:'📝 Sözleşme Türleri',c:`1. Kat Karşılığı İnşaat Sözleşmesi
+   Arsa + inşaat karşılığında daire paylaşımı
+
+2. Anahtar Teslim Sözleşmesi
+   Sabit fiyat, tanımlı kapsam, risk müteahhitte
+
+3. Birim Fiyat Sözleşmesi
+   İş miktarına göre ödeme, değişken kesin hesap
+
+4. Maliyet + Kâr Sözleşmesi
+   Maliyet + sabit/değişken kâr marjı
+
+Kritik maddeler:
+• Süre ve gecikme cezası
+• Malzeme kalite standartları
+• Ödeme planı ve hakediş sistemi
+• Uyuşmazlık çözüm yöntemi`},
+  maliyet:{t:'🧱 İnşaat Maliyet Tablosu (2026 Günceli)',c:`Sınıf bazlı toplam yapım maliyeti (2026 Q1):
+
+A Sınıfı (Lüks+):     40.000 – 75.000+ ₺/m²
+B Sınıfı (Orta-Üst):  24.000 – 40.000  ₺/m²
+C Sınıfı (Standart):   16.000 – 24.000  ₺/m²
+D Sınıfı (Ekonomik):   10.000 – 16.000  ₺/m²
+
+Kaba yapı sistemleri:
+• Betonarme:             7.000 – 12.000 ₺/m²
+• Çelik konstrüksiyon:  12.000 – 18.000 ₺/m²
+• Prefabrik:             5.500 –  9.000 ₺/m²
+
+Şehir bazlı ortalama (2026 Q1):
+• İstanbul:  ₺20.000 – 26.000/m²
+• Ankara:    ₺18.000 – 23.000/m²
+• İzmir:     ₺19.000 – 24.000/m²
+• Diğer:     ₺14.000 – 20.000/m²
+
+Kaynak: ÇŞİDB Birim Fiyat + piyasa.
+Her 3 ayda güncellenir.\`},
+
+  arsapayi:{t:'🤲 Arsa Payı Nasıl Hesaplanır?',c:`Kat mülkiyetinde her bağımsız bölüme
+tahsis edilen arsa payı tapu tescilinde belirlenir.
+
+Temel Formül:
+Arsa Payı = Bölüm Değeri / Toplam Değer × Toplam Alan
+
+Örnek (500 m² parselde 10 daire):
+• Teorik pay: 500 / 10 = 50 m²
+• Büyük dairelerin payı orantılı daha yüksektir
+
+Neden çok önemli?
+• Bina yıkılınca arsadaki hakkınızı belirler
+• Kentsel dönüşümde müzakere gücünüzdür
+• Kat karşılığı paylaşımında temel değişkendir
+• Hatalı tescil iptal davası açılabilir
+
+Pratik Hesap:
+Payınız % = (Daireniz m²) / (Net Toplam m²) x 100
+
+Tapuda okuma:
+"Hisse" sütununda: 50/1000 ifadesi
+= Parselin %5'i sizin
+
+Kentsel Dönüşüm eşikleri:
+• Payınız < 1/3  → azınlıkta kalırsınız
+• Payınız >= 2/3 → çoğunlukla karar alınır\`},
+
+  tapu:{t:'📜 Tapu Senedi Nasıl Okunur?',html:true,c:'<div style=\'font-family:var(--fb);font-size:11px\'><div style=\'background:linear-gradient(135deg,#b8912a,#e8c84a);border-radius:8px;padding:10px 14px;text-align:center;margin-bottom:12px\'><div style=\'font-size:9px;font-weight:700;color:#1a0800;letter-spacing:.5px\'>T.C. ÇEVRE VE ŞEHİRCİLİK BAKANLIĞI</div><div style=\'font-size:9px;color:#1a0800\'>Tapu ve Kadastro Genel Müdürlüğü</div><div style=\'font-size:15px;font-weight:800;color:#1a0800;margin-top:3px\'>📜 TAPU SENEDİ</div></div><div style=\'display:flex;flex-direction:column;gap:5px\'><div style=\'background:var(--surface2);border-radius:6px;padding:7px 9px;border-left:3px solid #e8c84a\'><div style=\'color:#e8c84a;font-weight:800;font-size:10px;margin-bottom:3px\'>🏘️ İL / İLÇE / MAHALLE</div><div style=\'color:var(--text2);line-height:1.5\'>Taşınmazın tam adresi. İmar ve değerleme sorgulamalarında temel referans.</div></div><div style=\'background:var(--surface2);border-radius:6px;padding:7px 9px;border-left:3px solid #3b82f6\'><div style=\'color:#3b82f6;font-weight:800;font-size:10px;margin-bottom:3px\'>🔢 ADA NO / PARSEL NO</div><div style=\'color:var(--text2);line-height:1.5\'>Kadastro sistemindeki konum kodu. Ada = yollarla çevrili blok; Parsel = ada içindeki tek arazi birimi. TKGM e-Devlet sorgusu için zorunlu.</div></div><div style=\'background:var(--surface2);border-radius:6px;padding:7px 9px;border-left:3px solid #10b981\'><div style=\'color:#10b981;font-weight:800;font-size:10px;margin-bottom:3px\'>📐 YÜZÖLÇÜMİ (m²)</div><div style=\'color:var(--text2);line-height:1.5\'>Parselin toplam alanı. İnşaat hesaplarında "parsel alanı" olarak kullanılan değer budur. TAKS ve KAKS bu değer üzerinden hesaplanır.</div></div><div style=\'background:var(--surface2);border-radius:6px;padding:7px 9px;border-left:3px solid #f59e0b\'><div style=\'color:#f59e0b;font-weight:800;font-size:10px;margin-bottom:3px\'>🏷️ NİTELİĞİ</div><div style=\'color:var(--text2);line-height:1.5\'>Arsa kullanım türü: ARSA (yapı yapılabilir), TARLA (tarım), BAĞ, vs. Yapı ruhsatı için "arsa" niteliğinde olmalıdır.</div></div><div style=\'background:var(--surface2);border-radius:6px;padding:7px 9px;border-left:3px solid #8b5cf6\'><div style=\'color:#8b5cf6;font-weight:800;font-size:10px;margin-bottom:3px\'>⚖️ HİSSE / ARSA PAYI</div><div style=\'color:var(--text2);line-height:1.5\'>Kat mülkiyetinde bağımsız bölümünüze (daire/dükkan) düşen arsa payı. Ör: 50/1000 = parselin %5\'i. Kentsel dönüşümde güç oranınızı belirler.</div></div><div style=\'background:var(--surface2);border-radius:6px;padding:7px 9px;border-left:3px solid #ef4444\'><div style=\'color:#ef4444;font-weight:800;font-size:10px;margin-bottom:3px\'>📋 EDİNME SEBEBİ</div><div style=\'color:var(--text2);line-height:1.5\'>Satış / Bağış / Miras / Kat Karşılığı / Mahkeme Kararı. Vergi hesabında ve uyuşmazlıklarda delil niteliğindedir.</div></div><div style=\'background:var(--surface2);border-radius:6px;padding:7px 9px;border-left:3px solid #06b6d4\'><div style=\'color:#06b6d4;font-weight:800;font-size:10px;margin-bottom:3px\'>🏠 BAĞIMSIZ BÖLÜM (KAT MÜLKİYETİ)</div><div style=\'color:var(--text2);line-height:1.5\'>Daire/ofis/dükkan tapu numarası ve kat/blok bilgisi. Brüt m² (duvarlar dahil) ≠ Net m² (yaşam alanı). Sözleşmede net m² talep edin.</div></div></div><div style=\'background:var(--pdim);border-radius:6px;padding:8px;margin-top:8px;border:1px solid rgba(245,158,11,.3)\'><b style=\'color:var(--primary)\'>💡 İpucu:</b><span style=\'color:var(--text2);margin-left:4px\'>Tapuyu almadan önce TKGM e-Devlet üzerinden "Tapu Sorgulama" yapın. Beyan ve şerh sütununu mutlaka inceleyin — ipotek, haciz ve irtifak hakları burada görünür.</span></div></div>'},
+
+  kdont:{t:'🏚️ Kentsel Dönüşüm (6306 Sayılı Kanun)',c:`Riskli yapı tespiti sonrası süreç:
+
+1. Riskli yapı tespiti (lisanslı kurum)
+2. Tapu müdürlüğüne şerh tescili
+3. Malikler 60 gün müzakere süreci
+4. 2/3 çoğunluk kararı ile yıkım ve yapım
+5. Azınlık payları zorla satışa çıkarılabilir
+
+Arsa Payı = Müzakere Gücü:
+• Payınız > 1/3  → kritik azınlık
+• Payınız >= 2/3 → çoğunluk kararı alabilirsiniz
+
+Kira Yardımı (2026 Q1):
+• Büyükşehir: 10.000 ₺/ay (maks 18 ay)
+• Diğer il:    7.500 ₺/ay (maks 18 ay)
+
+Mali Avantajlar:
+• KDV: yüzde 20 yerine yüzde 1
+• Tapu harcı: muaf
+• Kredi faiz desteği
+• TOKİ konut hakkı imkânı
+
+Değer Hesabı:
+Yeni bina payınız = Arsa Payı × Emsal × Fiyat\`}
+};
+function showGuide(k){
+  const g=GUIDES[k];if(!g)return;
+  document.getElementById('guide-box').style.display='';
+  document.getElementById('guide-title').textContent=g.t;
+  const gt=document.getElementById('guide-text');
+  if(g.html){gt.style.whiteSpace='normal';gt.innerHTML=g.c;}
+  else{gt.style.whiteSpace='pre-line';gt.textContent=g.c;}
+  setTimeout(()=>document.getElementById('guide-box').scrollIntoView({behavior:'smooth'}),100);
+}
+
+// ── OUTPUT ──
+function genShareTxt(){
+  const pn=document.getElementById('proje-adi').value||'Proje';
+  const il=document.getElementById('il-sel').value||'';
+  const ilce=document.getElementById('ilce-sel').value||'';
+  return `🏗️ ${pn}\n📍 ${il}${ilce?' / '+ilce:''}\n📐 ${fN(S.parsel)} m² parsel · KAKS ${S.kaks}\n🏢 ${S.katSayisi} kat · ${fN(S.toplamInsaat)} m² inşaat\n🏠 ${S.daireSayisi} daire · ${S.bType}\n💰 Tahmini Gelir: ${fM(S.toplamInsaat*0.75*S.satisFiyat)}\n\nİnşaat Pro ile analiz edildi.`;
+}
+function renderSummary(){
+  const pn=document.getElementById('proje-adi').value||'-';
+  const il=document.getElementById('il-sel').value||'-';
+  const ilce=document.getElementById('ilce-sel').value||'-';
+  const mah=document.getElementById('mahalle').value||'-';
+  const ada=document.getElementById('ada-no').value||'-';
+  const par=document.getElementById('parsel-no').value||'-';
+  if(S.parsel===0){document.getElementById('sum-content').innerHTML='<div style="padding:18px;text-align:center;color:var(--text3);font-size:12px">Proje bilgilerini girerek özeti görüntüleyin</div>';return;}
+  const net=S.toplamInsaat*0.75;
+  const gelir=net*S.satisFiyat;
+  const mal=S.toplamInsaat*S.insMaliyet;
+  const kar=gelir*(1-S.arsaPct/100)-mal;
+  const rows=[['Proje Adı',pn],['Konum',`${il} / ${ilce}`],['Mahalle',mah],['Ada / Parsel',`${ada} / ${par}`],['Parsel Alanı',fN(S.parsel)+' m²'],['TAKS / KAKS',`${S.taks} / ${S.kaks}`],['Kat Sayısı',S.katSayisi+' kat'],['Toplam İnşaat',fN(S.toplamInsaat)+' m²'],['Net Satılabilir',fN(net)+' m²'],['Yapı Tipi',S.bType],['Arsa / Müt. Payı',`%${S.arsaPct} / %${100-S.arsaPct}`],['Satış Fiyatı',fM(S.satisFiyat)+'/m²'],['Tahmini Gelir',fM(gelir)],['Müteahhit Net Kâr',fM(kar)]];
+  document.getElementById('sum-content').innerHTML=rows.map(([k,v])=>`<div class="sumrow"><span class="sum-k">${k}</span><span class="sum-v">${v}</span></div>`).join('');
+}
+function shareApp(){if(navigator.share)navigator.share({title:'İnşaat Pro',text:genShareTxt(),url:window.location.href}).catch(()=>{});else copyText();}
+function copyText(){navigator.clipboard.writeText(genShareTxt()).then(()=>toast('📋 Kopyalandı!')).catch(()=>toast('❌ Kopyalama başarısız'));}
+function openWA(){window.open('https://wa.me/?text='+encodeURIComponent('Merhaba, inşaat projemi değerlendirmenizi istiyorum:\n\n'+genShareTxt()),'_blank');}
+/* exportCSV defined above */
+// ── PWA ──
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();S.installEvt=e;});
+
+// ── ROTATION ──
+function rotateView(delta){
+  S.rotY=(S.rotY||0)+delta;
+  S.rotY=Math.max(-75,Math.min(75,S.rotY));
+  renderSection();
+}
+
+// ── CURRENCY ──
+async function fetchCurrency(){
+  const w=document.getElementById('cur-widget');
+  if(w)w.innerHTML='<div style="text-align:center;color:var(--text3);font-size:11px;padding:16px">⏳ Yükleniyor...</div>';
+  try{
+    const r=await fetch('https://open.er-api.com/v6/latest/USD',{cache:'no-cache'});
+    const d=await r.json();
+    if(!d||!d.rates)throw new Error('no data');
+    const rates=d.rates;
+    const tl=rates.TRY||1;
+    const eur=rates.EUR||0.92;
+    const gbp=rates.GBP||0.79;
+    const chf=rates.CHF||0.88;
+    const items=[
+      {flag:'🇺🇸',pair:'USD/TRY',name:'Dolar / Türk Lirası',val:(tl).toFixed(2),sub:'1 USD = '+tl.toFixed(2)+' ₺'},
+      {flag:'🇪🇺',pair:'EUR/TRY',name:'Euro / Türk Lirası',val:(tl/eur).toFixed(2),sub:'1 EUR = '+(tl/eur).toFixed(2)+' ₺'},
+      {flag:'🇬🇧',pair:'GBP/TRY',name:'Sterlin / Türk Lirası',val:(tl/gbp).toFixed(2),sub:'1 GBP = '+(tl/gbp).toFixed(2)+' ₺'},
+      {flag:'🇨🇭',pair:'CHF/TRY',name:'Frank / Türk Lirası',val:(tl/chf).toFixed(2),sub:'1 CHF = '+(tl/chf).toFixed(2)+' ₺'},
+      {flag:'🇪🇺',pair:'EUR/USD',name:'Euro / Dolar',val:(1/eur).toFixed(4),sub:'1 EUR = '+(1/eur).toFixed(4)+' $'},
+    ];
+    const html=items.map(i=>`<div class="cur-row">
+      <span class="cur-flag">${i.flag}</span>
+      <div class="cur-pair"><div class="cur-name">${i.pair}</div><div class="cur-sub">${i.name}</div></div>
+      <div style="text-align:right"><div class="cur-val">${i.val}</div></div>
+    </div>`).join('');
+    if(w)w.innerHTML=html;
+    const now=new Date();
+    const te=document.getElementById('cur-time');
+    if(te)te.textContent=T('cur.upd')+' '+now.toLocaleTimeString('tr-TR');
+  }catch(e){
+    if(w)w.innerHTML='<div style="text-align:center;color:var(--red);font-size:11px;padding:12px">❌ Veri alınamadı. İnternet bağlantısını kontrol edin.</div>';
+  }
+}
+
+// ── EXCEL EXPORT (SheetJS) ──
+function exportCSV(){
+  const il=document.getElementById('il-sel').value,ilce=document.getElementById('ilce-sel').value;
+  const rows=[
+    ['İnşaat Pro - Proje Raporu','','',''],
+    [''],
+    ['PROJE BİLGİLERİ','','',''],
+    ['Proje Adı',document.getElementById('proje-adi').value||'-','',''],
+    ['İl',il,'İlçe',ilce],
+    ['Mahalle',document.getElementById('mahalle').value||'-','Ada No',document.getElementById('ada-no').value||'-'],
+    ['Parsel No',document.getElementById('parsel-no').value||'-','',''],
+    [''],
+    ['İMAR PARAMETRELERİ','','',''],
+    ['Parsel Alanı (m²)',S.parsel,'TAKS',S.taks],
+    ['KAKS / Emsal',S.kaks,'Kat Sayısı',S.katSayisi],
+    ['Taban Alan (m²)',S.tabanAlan,'Toplam İnşaat m²',S.toplamInsaat],
+    ['Net Satılabilir m²',S.toplamInsaat*0.75,'',''],
+    [''],
+    ['FİNANSAL VERİLER','','',''],
+    ['Yapı Tipi',S.bType,'Arsa Payı %',S.arsaPct],
+    ['Satış Fiyatı ₺/m²',S.satisFiyat,'İnşaat Maliyeti ₺/m²',S.insMaliyet],
+    ['Tahmini Toplam Gelir',S.toplamInsaat*0.75*S.satisFiyat,'Müteahhit Payı %',100-S.arsaPct],
+    ['Müteahhit Tahmini Gelir',S.toplamInsaat*0.75*S.satisFiyat*(1-S.arsaPct/100),'',''],
+  ];
+  if(typeof XLSX!=='undefined'){
+    const wb=XLSX.utils.book_new();
+    const ws=XLSX.utils.aoa_to_sheet(rows);
+    // Auto column widths
+    const cols=[{wch:28},{wch:22},{wch:22},{wch:18}];
+    ws['!cols']=cols;
+    // Style header row
+    XLSX.utils.book_append_sheet(wb,ws,'Proje Raporu');
+    XLSX.writeFile(wb,'insaat_pro_rapor.xlsx');
+    toast('📊 Excel indirildi!');
+  } else {
+    // Fallback CSV
+    const csv=rows.map(r=>r.map(c=>`"${c}"`).join(',')).join('
+');
+    const blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8;'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download='insaat_pro_rapor.csv';a.click();
+    URL.revokeObjectURL(url);
+    toast('📊 CSV indirildi!');
+  }
+}
+
+// ── INSTALL PWA ──
+function installPWA(){
+  if(S.installEvt){
+    S.installEvt.prompt();
+    S.installEvt.userChoice.then(r=>{if(r.outcome==='accepted')toast('✅ Uygulama kuruldu!');});
+  } else {
+    toast('📱 Chrome: Menü → "Ana ekrana ekle"');
+  }
+}
+
+// ── INIT ──
+document.addEventListener('DOMContentLoaded',()=>{
+  loadIlData();
+  renderAptCfg();
+  simUpd();
+  genSWOT();
+  renderTimeline();
+  fetchCurrency();
+  applyLang();
+});
+window.addEventListener('resize',()=>{if(cur===3)renderSection();});
+</script>
+</body>
+</html>
