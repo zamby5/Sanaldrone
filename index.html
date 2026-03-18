@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pro Drone Portföy Analizi</title>
+    
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet">
+    
+    <style>
+        :root { --main-gold: #f59e0b; --dark-bg: #111827; }
+        body { margin: 0; padding: 0; font-family: 'Inter', sans-serif; background: #000; }
+        #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+        
+        .ui-panel {
+            position: absolute; top: 20px; left: 20px; width: 340px;
+            background: rgba(17, 24, 39, 0.95); backdrop-filter: blur(12px);
+            border-radius: 12px; box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            padding: 20px; z-index: 10; border-left: 5px solid var(--main-gold);
+            color: white;
+        }
+
+        .select-group { margin-bottom: 12px; }
+        label { display: block; font-size: 11px; color: #9ca3af; margin-bottom: 4px; text-transform: uppercase; }
+        select { 
+            width: 100%; padding: 10px; border-radius: 6px; background: #374151; 
+            color: white; border: 1px solid #4b5563; outline: none; cursor: pointer;
+        }
+
+        .btn-drone { 
+            width: 100%; background: var(--main-gold); color: #000; padding: 14px; 
+            margin-top: 15px; font-size: 14px; border-radius: 8px; border: none;
+            font-weight: 800; cursor: pointer; transition: all 0.3s ease;
+        }
+        .btn-drone:hover { background: #fbbf24; transform: scale(1.02); }
+        .btn-drone:disabled { background: #4b5563; cursor: not-allowed; opacity: 0.6; }
+
+        .info-text { font-size: 12px; color: #d1d5db; margin-top: 15px; line-height: 1.5; }
+    </style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<div class="ui-panel">
+    <h2 style="margin:0 0 15px 0; font-size: 18px; color: var(--main-gold);">📍 Portföy Navigasyon</h2>
+    
+    <div class="select-group">
+        <label>Şehir Seçin</label>
+        <select id="citySelect" onchange="updateDistricts()">
+            <option value="">İl Seçiniz...</option>
+            <option value="30.71,36.89">Antalya</option>
+            <option value="28.97,41.00">İstanbul</option>
+            <option value="32.85,39.93">Ankara</option>
+            <option value="27.14,38.41">İzmir</option>
+            <option value="34.63,36.81">Mersin</option>
+        </select>
+    </div>
+
+    <div class="select-group">
+        <label>İlçe Seçin</label>
+        <select id="districtSelect" onchange="goToLocation()">
+            <option value="">Önce İl Seçin...</option>
+        </select>
+    </div>
+
+    <p class="info-text">
+        1. Listeden konumu seçin.<br>
+        2. Haritadan parselin üzerine <b>tıklayın</b>.<br>
+        3. Drone turunu başlatın.
+    </p>
+    
+    <button id="droneBtn" class="btn-drone" onclick="toggleDrone()" disabled>🚁 DRONE TURUNU BAŞLAT</button>
+</div>
+
+<script>
+    mapboxgl.accessToken = 'pk.eyJ1IjoibWFwYm94YXBpIiwiYSI6ImNqZ3oxZXVrNDA3NTkzMnFpMzh3YmFhNXoifQ.m9vCqLpC3A9uI7IOfvEwOQ';
+
+    const map = new mapboxgl.Map({
+        container: 'map',
+        style: 'mapbox://styles/mapbox/satellite-streets-v12',
+        center: [30.71, 36.89], 
+        zoom: 10,
+        pitch: 60,
+        antialias: true
+    });
+
+    const districts = {
+        "30.71,36.89": [ // Antalya
+            {n: "Kepez (Göksu)", c: "30.7133,36.9200"},
+            {n: "Muratpaşa (Merkez)", c: "30.7075,36.8848"},
+            {n: "Konyaaltı", c: "30.6350,36.8617"},
+            {n: "Lara", c: "30.7800,36.8500"}
+        ],
+        "28.97,41.00": [ // İstanbul
+            {n: "Levent", c: "29.0147,41.0777"},
+            {n: "Ataşehir", c: "29.1167,40.9917"},
+            {n: "Kadıköy", c: "29.0275,40.9910"}
+        ]
+    };
+
+    let isRotating = false;
+    let marker = new mapboxgl.Marker({ color: "#f59e0b" });
+
+    function updateDistricts() {
+        const cityVal = document.getElementById('citySelect').value;
+        const distSelect = document.getElementById('districtSelect');
+        distSelect.innerHTML = '<option value="">İlçe Seçiniz...</option>';
+        
+        if(districts[cityVal]) {
+            districts[cityVal].forEach(d => {
+                distSelect.innerHTML += `<option value="${d.c}">${d.n}</option>`;
+            });
+            const coords = cityVal.split(',').map(Number);
+            map.flyTo({ center: coords, zoom: 10 });
+        }
+    }
+
+    function goToLocation() {
+        const coords = document.getElementById('districtSelect').value.split(',').map(Number);
+        if(coords.length > 1) {
+            map.flyTo({ center: coords, zoom: 15, pitch: 45 });
+        }
+    }
+
+    map.on('click', (e) => {
+        marker.setLngLat(e.lngLat).addTo(map);
+        document.getElementById('droneBtn').disabled = false;
+        map.flyTo({ center: e.lngLat, zoom: 18, pitch: 75, speed: 0.8 });
+    });
+
+    function toggleDrone() {
+        isRotating = !isRotating;
+        const btn = document.getElementById('droneBtn');
+        if (isRotating) {
+            btn.innerText = "⏹ TURU DURDUR";
+            btn.style.background = "#ef4444";
+            rotateCamera(0);
+        } else {
+            btn.innerText = "🚁 DRONE TURUNU BAŞLAT";
+            btn.style.background = "#f59e0b";
+        }
+    }
+
+    function rotateCamera(timestamp) {
+        if (!isRotating) return;
+        map.rotateTo((timestamp / 120) % 360, { duration: 0 });
+        requestAnimationFrame(rotateCamera);
+    }
+</script>
+
+</body>
+</html>
