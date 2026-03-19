@@ -1,8 +1,10 @@
 {
-  "name": "turyap-queen-parsel-sim",
-  "version": "2.5.0",
-  "description": "TKGM MEGSIS API Vercel Proxy",
+  "name": "sanal-drone-tkgm",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "node api/proxy.js"
+  },
   "dependencies": {
-    "axios": "^1.6.8"
+    "axios": "^1.6.0"
   }
 }
