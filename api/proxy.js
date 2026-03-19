@@ -1,5 +1,6 @@
 // api/proxy.js
 const fetch = require('node-fetch');
+
 module.exports = async (req, res) => {
   // Chrome'un CORS engelini kaldıran sihirli satırlar
   res.setHeader('Access-Control-Allow-Origin', '*');
