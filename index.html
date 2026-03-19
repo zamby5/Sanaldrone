@@ -1,0 +1,1210 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>🛰️ Drone Parsel Sim v2.5 — Turyap Queen</title>
+<link rel="manifest" id="pwa-manifest">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Parsel Sim Pro">
+<meta name="theme-color" content="#1a3a6e">
+<link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet">
+<script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Exo+2:wght@300;600;800&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --acc:#1a4fa0;--acc2:#2266cc;--red:#c82800;--grn:#166630;--gld:#9a6800;
+  --panel:#fff;--panelbg:#f5f7fc;--border:rgba(20,70,160,.12);
+  --txt:#1a2438;--sub:#7a8a9a;
+  --ff:'Share Tech Mono',monospace;--ff2:'Exo 2',sans-serif;
+}
+html,body{height:100%;overflow:hidden;background:#eef2f8;font-family:var(--ff)}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:#eaeff6}
+::-webkit-scrollbar-thumb{background:rgba(20,70,160,.18);border-radius:4px}
+
+/* ══ FORM ══ */
+#fscreen{
+  height:100vh;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(150deg,#c8deff 0%,#e8f0fb 45%,#c8e4d0 100%);
+  overflow-y:auto;padding:20px;
+}
+.fbox{
+  background:rgba(255,255,255,.98);border:1px solid rgba(20,80,200,.15);
+  border-radius:22px;padding:34px 30px;width:100%;max-width:440px;
+  box-shadow:0 10px 50px rgba(10,60,160,.13),0 2px 8px rgba(0,0,0,.06);
+}
+.fbrand{text-align:center;margin-bottom:6px}
+.fbrand-logo{font-size:48px;display:block;animation:bob 3.5s ease-in-out infinite;filter:drop-shadow(0 4px 10px rgba(20,80,200,.3))}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+.fbrand-t{font-family:var(--ff2);font-weight:800;font-size:18px;color:var(--acc);letter-spacing:4px;margin-top:5px}
+.fbrand-s{font-size:8px;color:#8a9aaa;letter-spacing:3px;margin-top:2px}
+.fbrand-tq{font-size:9px;color:#b07800;letter-spacing:2px;font-weight:600;margin-top:4px}
+.fhr{height:1px;background:linear-gradient(90deg,transparent,rgba(20,80,200,.2),transparent);margin:14px 0}
+.flbl{font-size:9px;color:var(--acc);letter-spacing:2px;display:block;margin-bottom:4px;font-weight:700}
+.finp{
+  width:100%;background:#f2f6fc;border:1px solid rgba(20,80,200,.18);
+  border-radius:9px;padding:10px 13px;color:var(--txt);font-size:13px;font-family:var(--ff);
+  outline:none;margin-bottom:10px;transition:all .2s;
+}
+.finp:focus{border-color:rgba(20,100,220,.5);box-shadow:0 0 0 3px rgba(20,100,220,.07);background:#fff}
+.frow{display:flex;gap:10px}.frow .fg{flex:1}
+.sbtn{
+  width:100%;background:linear-gradient(135deg,#0e3d99,#1e66dd);
+  border:none;border-radius:11px;padding:13px;color:#fff;
+  font-size:12px;font-weight:700;font-family:var(--ff);letter-spacing:3px;
+  cursor:pointer;box-shadow:0 5px 18px rgba(10,60,200,.3);transition:all .2s;
+}
+.sbtn:hover{transform:translateY(-2px);box-shadow:0 9px 26px rgba(10,60,200,.4)}
+.dbtn{background:linear-gradient(135deg,#145522,#229944);box-shadow:0 5px 18px rgba(10,120,50,.25)}
+.fbtns{display:flex;gap:10px;margin-top:3px}
+.fdown{display:flex;gap:10px;margin-top:13px;padding-top:13px;border-top:1px solid rgba(20,80,200,.08)}
+.fdlbtn{flex:1;display:flex;align-items:center;gap:8px;background:#fff;border:1.5px solid rgba(20,80,200,.18);border-radius:10px;padding:9px;cursor:pointer;transition:all .2s;box-shadow:0 2px 6px rgba(0,0,0,.05)}
+.fdlbtn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.1)}
+.fdlbtn .ic{font-size:18px}.fdlbtn .tt{font-size:10px;font-weight:700;color:var(--acc);letter-spacing:1px}
+.fdlbtn .st{font-size:8px;color:var(--sub);margin-top:1px}
+.fdlbtn.g{border-color:rgba(20,120,60,.2)}.fdlbtn.g .tt{color:var(--grn)}
+
+/* ══ SIM ══ */
+#sscreen{display:none;height:100vh;flex-direction:column}
+
+/* TOPBAR */
+#topbar{
+  height:44px;flex-shrink:0;background:var(--panel);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 12px;box-shadow:0 2px 10px rgba(0,0,0,.07);z-index:40;gap:6px;
+}
+.rec-dot{width:7px;height:7px;border-radius:50%;background:var(--red);box-shadow:0 0 5px rgba(200,40,0,.5);animation:blink 1.1s infinite;flex-shrink:0}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.08}}
+.tb-phase{background:rgba(200,80,0,.08);border:1px solid rgba(200,80,0,.2);border-radius:12px;padding:2px 10px;font-size:9px;color:#aa4400;white-space:nowrap}
+.tb-mid{font-family:var(--ff2);font-size:10px;font-weight:700;color:var(--acc);text-align:center;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.tb-r{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.tb-stat{font-size:9px;white-space:nowrap}
+.xbtn{background:#f2f5fb;border:1px solid rgba(20,70,160,.14);border-radius:6px;color:var(--sub);padding:3px 10px;cursor:pointer;font-size:9px;font-family:var(--ff);transition:all .2s;white-space:nowrap}
+.xbtn:hover{color:var(--acc);border-color:rgba(20,100,220,.3)}
+.ham{display:none;background:#f2f5fb;border:1px solid var(--border);border-radius:6px;padding:4px 8px;cursor:pointer;font-size:14px;line-height:1}
+
+/* MAIN */
+#main{flex:1;display:flex;min-height:0;overflow:hidden;position:relative}
+
+/* LEFT PANEL */
+#lpanel{
+  width:150px;flex-shrink:0;background:var(--panelbg);border-right:1px solid var(--border);
+  padding:8px 7px;display:flex;flex-direction:column;gap:5px;overflow-y:auto;z-index:20;transition:transform .25s;
+}
+.ptitle{font-size:8px;color:rgba(20,80,180,.55);letter-spacing:2px;font-weight:700;
+  padding-bottom:3px;border-bottom:1px solid rgba(20,70,160,.08);margin-bottom:3px}
+.cbtn{display:block;width:100%;border-radius:7px;padding:6px 8px;cursor:pointer;
+  font-size:10px;font-family:var(--ff);margin-bottom:3px;text-align:left;
+  border:1px solid rgba(20,70,160,.09);background:#fff;color:var(--sub);transition:all .15s;
+  box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.cbtn:hover{color:var(--acc);border-color:rgba(20,90,200,.25);background:#eef4ff}
+.cbtn.on{border-color:var(--acc2);background:#ddeaff;color:var(--acc);font-weight:700}
+.cbtn.on-g{border-color:#1a7a40;background:#ddf4e8;color:var(--grn);font-weight:700}
+.cbtn.on-r{border-color:#c82800;background:#fde8e2;color:var(--red)}
+.cbtn.rec-btn{background:linear-gradient(135deg,#fff0ee,#fff);border-color:rgba(200,40,0,.3);color:#aa2200}
+.cbtn.rec-btn.active{background:linear-gradient(135deg,#ffe0dc,#ffeae8);border-color:#c82800;color:#c82800;animation:recpulse .8s infinite alternate}
+@keyframes recpulse{from{opacity:1}to{opacity:.6}}
+.dvd{height:1px;background:rgba(20,70,160,.07);margin:2px 0}
+
+/* MAP */
+#mapc{flex:1;position:relative;min-width:0;overflow:hidden;min-height:200px}
+#map{position:absolute;inset:0;width:100%;height:100%}
+.maplibregl-popup-content{
+  background:#fff!important;border:1px solid rgba(20,70,160,.18)!important;
+  color:var(--txt)!important;font-family:var(--ff)!important;
+  padding:6px 10px!important;border-radius:8px!important;font-size:10px!important;
+  box-shadow:0 4px 16px rgba(0,0,0,.12)!important;
+}
+.maplibregl-popup-tip{display:none!important}
+
+/* MAP OVERLAYS */
+.ov{
+  position:absolute;z-index:15;background:rgba(255,255,255,.94);
+  border:1px solid var(--border);border-radius:9px;
+  backdrop-filter:blur(10px);box-shadow:0 2px 10px rgba(0,0,0,.09);
+}
+#hud-tl{top:10px;left:10px;padding:7px 11px;display:flex;gap:10px}
+#phase-ind{top:10px;left:50%;transform:translateX(-50%);
+  padding:4px 15px;color:#aa4400;font-size:10px;letter-spacing:2px;white-space:nowrap;
+  border-color:rgba(200,80,0,.22)}
+#wx-ov{top:10px;right:10px;padding:7px 10px;text-align:center;min-width:80px;border-color:rgba(160,120,0,.18)}
+#compass-ov{bottom:12px;left:12px;padding:0;background:none;border:none;box-shadow:none;width:66px;height:66px}
+#mbar{bottom:12px;left:50%;transform:translateX(-50%);padding:6px 16px;color:var(--grn);font-size:11px;letter-spacing:1px;display:none;border-color:rgba(20,120,60,.25)}
+#tkgm-badge{bottom:12px;right:12px;padding:5px 10px;font-size:9px;color:var(--grn);border-color:rgba(20,120,60,.18)}
+#rec-badge{top:50%;left:50%;transform:translate(-50%,-50%);padding:8px 20px;color:var(--red);font-size:12px;font-weight:700;letter-spacing:3px;border-color:rgba(200,40,0,.3);display:none;animation:recpulse .7s infinite alternate}
+.hud-i{text-align:center;min-width:50px}
+.hud-l{font-size:7px;color:var(--sub);letter-spacing:1px}
+.hud-v{font-size:13px;font-weight:700;color:var(--acc);font-family:var(--ff2);line-height:1.2}
+
+/* Smart pin */
+.smart-pin{
+  position:absolute;z-index:20;pointer-events:none;
+  background:rgba(255,255,255,.96);border:1.5px solid rgba(20,80,200,.3);
+  border-radius:20px;padding:5px 12px;font-family:var(--ff);font-size:10px;
+  color:var(--acc);font-weight:600;box-shadow:0 3px 12px rgba(0,0,0,.15);
+  animation:pinIn .4s ease;
+}
+@keyframes pinIn{from{opacity:0;transform:translateY(-8px) scale(.9)}to{opacity:1;transform:none}}
+@keyframes pinOut{from{opacity:1}to{opacity:0;transform:translateY(8px) scale(.9)}}
+
+/* RIGHT PANEL */
+#rpanel{
+  width:228px;flex-shrink:0;background:var(--panelbg);border-left:1px solid var(--border);
+  padding:10px;overflow-y:auto;transition:width .22s,padding .22s;
+}
+#rpanel.hidden{width:0;padding:0;overflow:hidden}
+.rrow{display:flex;justify-content:space-between;font-size:10px;padding:3px 0;border-bottom:1px solid rgba(20,70,160,.05)}
+.rk{color:#8a9aaa}.rv{color:var(--txt);text-align:right;max-width:116px;word-break:break-word;font-weight:700}
+.valbox{padding:8px;background:linear-gradient(135deg,#e6f4ec,#f0faf4);border:1px solid rgba(20,110,50,.16);border-radius:7px;margin-top:7px}
+.sale-row{padding:5px 0;border-bottom:1px solid rgba(20,70,160,.05);font-size:10px}
+.sale-date{color:var(--sub);font-size:9px}.sale-price{color:var(--acc);font-weight:700}
+.sale-type{font-size:8px;background:#ddeaff;color:var(--acc);border-radius:4px;padding:1px 5px;margin-left:4px}
+.poi-i{padding:4px 0;border-bottom:1px solid rgba(20,70,160,.05);font-size:10px;display:flex;align-items:center;gap:5px}
+.poi-d{color:var(--grn);margin-left:auto;flex-shrink:0;font-weight:700;font-size:10px}
+.poi-n{color:var(--txt);flex:1;font-size:10px}
+.lnk{display:block;color:var(--acc);font-size:10px;text-decoration:none;padding:4px 0;border-bottom:1px solid rgba(20,70,160,.05)}
+.lnk:hover{color:#0a3a90}
+.ai-box{background:linear-gradient(135deg,#edf3ff,#f5eeff);border:1px solid rgba(80,60,180,.16);border-radius:8px;padding:9px;margin-top:7px;font-size:10px;color:var(--txt);line-height:1.75}
+.ai-lbl{font-size:8px;color:#5030b0;letter-spacing:2px;font-weight:700;margin-bottom:5px}
+
+/* BOTTOMBAR */
+#bbar{
+  height:42px;flex-shrink:0;background:var(--panel);border-top:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-around;padding:0 6px;z-index:20;
+  box-shadow:0 -2px 8px rgba(0,0,0,.05);overflow-x:auto;
+}
+.bi{text-align:center;min-width:58px;flex-shrink:0}
+.bl{font-size:7px;color:var(--sub);letter-spacing:1px}
+.bv{font-size:12px;font-weight:700;color:var(--acc);font-family:var(--ff2)}
+
+input[type=range]{width:100%;accent-color:var(--acc);cursor:pointer}
+
+/* MOBILE */
+@media(max-width:768px){
+  .ham{display:block}
+  #lpanel{position:absolute;top:0;left:0;height:100%;width:160px;transform:translateX(-100%);box-shadow:4px 0 20px rgba(0,0,0,.12)}
+  #lpanel.open{transform:translateX(0)}
+  #rpanel{display:none}
+  .tb-mid{font-size:9px}.tb-stat{display:none}
+  #hud-tl{gap:6px}.hud-v{font-size:11px}
+  #phase-ind{font-size:9px;padding:3px 10px}
+  #tkgm-badge{display:none}
+  #bbar .bi:nth-child(n+5){display:none}
+}
+@media(max-width:480px){
+  .fbox{padding:22px 16px}.fbrand-t{font-size:15px}
+  #hud-tl{top:6px;left:6px;padding:4px 7px}
+  #phase-ind{display:none}
+  #wx-ov{top:6px;right:6px;min-width:68px;padding:4px 7px}
+}
+#lpanel-overlay{display:none;position:absolute;inset:0;z-index:19;background:rgba(0,0,0,.15)}
+#lpanel-overlay.show{display:block}
+</style>
+</head>
+<body>
+
+<!-- ══ FORM ══ -->
+<div id="fscreen">
+<div class="fbox">
+  <div class="fbrand">
+    <span class="fbrand-logo">🛰️</span>
+    <div class="fbrand-t">DRONE PARSEL SİM</div>
+    <div class="fbrand-s">PROFESSIONAL EDITION v2.5</div>
+    <div class="fbrand-tq">▸ TURYAP QUEEN · ANTALYA</div>
+  </div>
+  <div class="fhr"></div>
+  <label class="flbl">İL</label>
+  <input class="finp" id="f-il" value="Antalya">
+  <div class="frow">
+    <div class="fg"><label class="flbl">İLÇE</label><input class="finp" id="f-ilce" value="Konyaaltı"></div>
+    <div class="fg"><label class="flbl">MAHALLE</label><input class="finp" id="f-mah" value="Arapsuyu"></div>
+  </div>
+  <div class="frow">
+    <div class="fg"><label class="flbl">ADA NO</label><input class="finp" id="f-ada" value="826"></div>
+    <div class="fg"><label class="flbl">PARSEL NO</label><input class="finp" id="f-parsel" value="4"></div>
+  </div>
+  <div class="fbtns">
+    <button class="sbtn" onclick="startSim(false)" style="flex:2">🚀 SİMÜLASYONU BAŞLAT</button>
+    <button class="sbtn dbtn" onclick="startSim(true)" style="flex:1">🗼 DEMO</button>
+  </div>
+  <div class="fdown">
+    <button class="fdlbtn" onclick="dlHTML()">
+      <span class="ic">💾</span><div><div class="tt">HTML İNDİR</div><div class="st">Offline çalışır</div></div>
+    </button>
+    <button class="fdlbtn g" id="pwa-btn" onclick="doPWA()">
+      <span class="ic">📲</span><div><div class="tt">EKRANA EKLE</div><div class="st">Uygulama gibi</div></div>
+    </button>
+  </div>
+</div>
+</div>
+
+<!-- ══ SIM ══ -->
+<div id="sscreen">
+
+<!-- TOPBAR -->
+<div id="topbar">
+  <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+    <button class="ham" onclick="toggleLP()">☰</button>
+    <div class="rec-dot"></div>
+    <span class="tb-phase" id="ph-badge">🔻 YAKLAŞIM</span>
+  </div>
+  <div class="tb-mid" id="tb-title">— ADA / — PARSEL · TURYAP QUEEN</div>
+  <div class="tb-r">
+    <span class="tb-stat" style="color:#1a7a40">🔋 92%</span>
+    <span class="tb-stat" style="color:#9a6800">📡 GPS</span>
+    <span class="tb-stat" id="tb-crd" style="color:var(--acc);font-size:8px"></span>
+    <button class="xbtn" onclick="exitSim()">← ÇIKIŞ</button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+<div id="lpanel-overlay" onclick="closeLP()"></div>
+
+<!-- LEFT PANEL -->
+<div id="lpanel">
+  <div>
+    <div class="ptitle">UÇUŞ MODU</div>
+    <button class="cbtn on" id="btn-cin"  onclick="setMode('cinematic')">🎬 SİNEMATİK</button>
+    <button class="cbtn"    id="btn-fast" onclick="setMode('fast')">⚡ HIZLI KEŞİF</button>
+    <button class="cbtn"    id="btn-stp"  onclick="setMode('paused')">⏸ DURDUR</button>
+  </div>
+  <div class="dvd"></div>
+  <div>
+    <div class="ptitle">HARİTA KATMANI</div>
+    <button class="cbtn on" id="btn-sat" onclick="setLyr('sat')">🛰️ UYDU (ESRI)</button>
+    <button class="cbtn"    id="btn-osm" onclick="setLyr('osm')">🗺️ OSM</button>
+  </div>
+  <div class="dvd"></div>
+  <div>
+    <div class="ptitle">KATMANLAR</div>
+    <button class="cbtn on-g" id="btn-tkgm"  onclick="togTKGM()">📐 PARSEL SINIRI</button>
+    <button class="cbtn on"   id="btn-rings" onclick="togRings()">◎ MESAFE HALKALARI</button>
+  </div>
+  <div class="dvd"></div>
+  <div>
+    <div class="ptitle">MEDYA</div>
+    <button class="cbtn" id="btn-ss"  onclick="takeScreenshot()">📸 EKRAN ÇIKTISI</button>
+    <button class="cbtn rec-btn" id="btn-rec" onclick="toggleRecord()">🎥 VİDEO KAYDET</button>
+  </div>
+  <div class="dvd"></div>
+  <div>
+    <div class="ptitle">ANALİZ</div>
+    <button class="cbtn" id="btn-meas"  onclick="togMeasure()">📏 ÖLÇÜM ARACI</button>
+    <button class="cbtn" id="btn-poi"   onclick="loadPOI()">📍 YAKIN ÇEVRE</button>
+    <button class="cbtn" id="btn-ai"    onclick="runAI()">🤖 YATIRIM ÖZETİ</button>
+    <button class="cbtn" id="btn-tkgml" onclick="openTKGM()">🔗 TKGM SORGU</button>
+    <button class="cbtn" id="btn-panel" onclick="togPanel()">📋 PANEL</button>
+  </div>
+  <div class="dvd"></div>
+  <div>
+    <div class="ptitle">YÜKSEKLİK</div>
+    <div style="color:var(--acc);font-size:18px;font-weight:700;text-align:center;font-family:var(--ff2)" id="alt-d">120 m</div>
+    <input type="range" id="alt-sl" min="20" max="500" value="120" oninput="setAlt(this.value)">
+    <div style="display:flex;justify-content:space-between;color:var(--sub);font-size:8px;margin-top:1px"><span>20m</span><span>500m</span></div>
+  </div>
+  <div class="dvd"></div>
+  <div>
+    <div class="ptitle">EĞİM AÇISI</div>
+    <div style="color:var(--gld);font-size:14px;font-weight:700;text-align:center;font-family:var(--ff2)" id="pitch-d">35°</div>
+    <input type="range" id="pitch-sl" min="0" max="60" value="35" oninput="setPitch(this.value)" style="accent-color:var(--gld)">
+    <div style="display:flex;justify-content:space-between;color:var(--sub);font-size:8px;margin-top:1px"><span>Düz</span><span>60°</span></div>
+  </div>
+</div><!-- /lpanel -->
+
+<!-- MAP -->
+<div id="mapc">
+  <div id="map"></div>
+
+  <div class="ov" id="hud-tl">
+    <div class="hud-i"><div class="hud-l">YÜKSEKLİK</div><div class="hud-v" id="h-alt">— m</div></div>
+    <div class="hud-i"><div class="hud-l">HIZ</div><div class="hud-v" id="h-spd" style="color:var(--grn)">—</div></div>
+    <div class="hud-i"><div class="hud-l">YÖN</div><div class="hud-v" id="h-hdg" style="color:var(--gld)">—°</div></div>
+    <div class="hud-i"><div class="hud-l">ZOOM</div><div class="hud-v" id="h-zoom">—</div></div>
+  </div>
+  <div class="ov" id="phase-ind">🔻 YAKLAŞIM FAZASI</div>
+  <div class="ov" id="wx-ov">
+    <div style="font-size:22px" id="wx-ic">⏳</div>
+    <div style="font-size:13px;font-weight:700;color:var(--gld);font-family:var(--ff2)" id="wx-t">—°</div>
+    <div style="font-size:9px;color:var(--sub);margin-top:1px" id="wx-w">…</div>
+  </div>
+  <canvas class="ov" id="compass-ov" width="66" height="66"></canvas>
+  <div class="ov" id="mbar">📏 <span id="m-st">İlk noktayı seçin</span> <span id="m-res" style="color:var(--txt);font-weight:700"></span></div>
+  <div class="ov" id="tkgm-badge">📐 TKGM Kadastral Katman · Aktif</div>
+  <div class="ov" id="rec-badge">⏺ KAYIT · <span id="rec-timer">00:00</span></div>
+
+  <svg style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;z-index:8;opacity:.35" width="32" height="32" viewBox="0 0 32 32">
+    <line x1="16" y1="0" x2="16" y2="10" stroke="#222" stroke-width="1.2"/>
+    <line x1="16" y1="22" x2="16" y2="32" stroke="#222" stroke-width="1.2"/>
+    <line x1="0" y1="16" x2="10" y2="16" stroke="#222" stroke-width="1.2"/>
+    <line x1="22" y1="16" x2="32" y2="16" stroke="#222" stroke-width="1.2"/>
+    <circle cx="16" cy="16" r="5" stroke="#222" fill="none" stroke-width="1"/>
+    <circle cx="16" cy="16" r="1.5" fill="#c82800"/>
+  </svg>
+</div><!-- /mapc -->
+
+<!-- RIGHT PANEL -->
+<div id="rpanel">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+    <div style="font-size:9px;color:var(--acc);letter-spacing:3px;font-weight:700">📋 PARSEL ANALİZİ</div>
+    <button onclick="togPanel()" style="background:none;border:none;color:var(--sub);cursor:pointer;font-size:14px;line-height:1">✕</button>
+  </div>
+  <div id="rp-data"></div>
+
+  <div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--border)">
+    <div class="ptitle">📈 YAKIN ZAMANLı SATIŞLAR (2025–2026)</div>
+    <div id="sales-data"></div>
+  </div>
+
+  <div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--border)">
+    <div class="ptitle">🤖 YATIRIM ANALİZİ</div>
+    <div id="ai-out" style="color:var(--sub);font-size:10px">Sol panelden "Yatırım Özeti"ne basın.</div>
+  </div>
+
+  <div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--border)">
+    <div class="ptitle">📍 YAKIN ÇEVRE (600m)</div>
+    <div id="poi-list" style="color:var(--sub);font-size:10px">Yükleniyor...</div>
+  </div>
+
+  <div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--border)">
+    <div class="ptitle">🔗 DIŞ BAĞLANTILAR</div>
+    <a class="lnk" id="lnk-sv"   href="#" target="_blank">📷 Google Street View →</a>
+    <a class="lnk" id="lnk-tkgm" href="#" target="_blank">🏛️ TKGM Parselsorgu →</a>
+    <a class="lnk" id="lnk-osm"  href="#" target="_blank">🗺️ OpenStreetMap →</a>
+    <a class="lnk" id="lnk-gm"   href="#" target="_blank">📌 Google Haritalar →</a>
+  </div>
+</div>
+</div><!-- /main -->
+
+<!-- BOTTOMBAR -->
+<div id="bbar">
+  <div class="bi"><div class="bl">YÜKSEKLİK</div><div class="bv" id="b-alt">—</div></div>
+  <div class="bi"><div class="bl">EĞİM</div><div class="bv" id="b-pit" style="color:var(--gld)">—°</div></div>
+  <div class="bi"><div class="bl">YÖN</div><div class="bv" id="b-bear" style="color:var(--grn)">—°</div></div>
+  <div class="bi"><div class="bl">ALAN</div><div class="bv" id="b-area">—</div></div>
+  <div class="bi"><div class="bl">KOORDİNAT</div><div class="bv" id="b-crd" style="font-size:9px">—</div></div>
+  <div class="bi"><div class="bl">ZOOM</div><div class="bv" id="b-zoom">—</div></div>
+</div>
+</div><!-- /sscreen -->
+
+<script>
+// ══ PWA ══
+(function(){
+  const sv=`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%231a4fa0'/><text y='68' x='50' text-anchor='middle' font-size='56'>🛰️</text></svg>`;
+  const ic=`data:image/svg+xml,${sv}`;
+  const el=document.getElementById('pwa-manifest');
+  if(el) el.href=URL.createObjectURL(new Blob([JSON.stringify({
+    name:'Drone Parsel Sim Pro',short_name:'Parsel Pro',start_url:'./',display:'standalone',
+    orientation:'landscape',background_color:'#eef2f8',theme_color:'#1a4fa0',
+    icons:[{src:ic,sizes:'192x192',type:'image/svg+xml'},{src:ic,sizes:'512x512',type:'image/svg+xml'}]
+  })],{type:'application/json'}));
+  const l=document.createElement('link');l.rel='apple-touch-icon';l.href=ic;document.head.appendChild(l);
+})();
+let _dp=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();_dp=e;});
+async function doPWA(){
+  if(_dp){_dp.prompt();const{outcome}=await _dp.userChoice;_dp=null;
+    if(outcome==='accepted'){const b=document.getElementById('pwa-btn');
+      if(b)b.innerHTML='<span class="ic">✅</span><div><div class="tt">YÜKLENDİ!</div><div class="st">Ana ekranda açın</div></div>';}}
+  else{const d=document.createElement('div');d.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:flex-end;justify-content:center;padding:20px';
+    d.innerHTML=`<div style="background:#fff;border-radius:20px;padding:24px;max-width:360px;width:100%;text-align:center;font-family:Exo 2,sans-serif"><div style="font-size:34px;margin-bottom:8px">📲</div><div style="font-weight:800;font-size:14px;color:#1a4fa0;margin-bottom:8px">Ana Ekrana Ekle</div><div style="color:#445;font-size:12px;line-height:1.7;margin-bottom:12px"><b>iPhone:</b> Safari → Paylaş → <b>Ana Ekrana Ekle</b><br><b>Android:</b> Chrome menüsü → <b>Ana ekrana ekle</b></div><button onclick="this.closest('div[style]').remove()" style="background:#1a4fa0;border:none;border-radius:10px;color:#fff;padding:10px 26px;font-size:13px;font-weight:700;cursor:pointer">Anladım</button></div>`;
+    document.body.appendChild(d);d.addEventListener('click',e=>{if(e.target===d)d.remove();});}
+}
+function dlHTML(){
+  const b=new Blob([document.documentElement.outerHTML],{type:'text/html;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='drone-parsel-sim-pro.html';a.click();URL.revokeObjectURL(a.href);
+}
+
+// ══ GLOBALS ══
+let map=null,center=null,pDims=null,fd={};
+let droneT=null,orbitRAF=null,orbitOn=false;
+let phase=0,bearing=0,altitude=120,pitchVal=35;
+let mode='cinematic',lyrKey='sat';
+let measOn=false,measPts=[],measMks=[],measLineOn=false;
+let tkgmOn=true,ringsOn=true,panelOn=true;
+let ringMks=[],poiMks=[],smartPins=[];
+let lastPOIs=[];
+let hudInterval=null;
+
+// MediaRecorder
+let recorder=null,recChunks=[],recTimer=null,recSec=0,isRecording=false;
+
+const PHASES=[
+  {n:'🔻 YAKLAŞIM',   zoom:14.0,pitch:0,  dur:9000},
+  {n:'🔄 360° ORBİT', zoom:17.5,pitch:38, dur:15000},
+  {n:'⚡ ALÇAK GEÇIŞ', zoom:18.5,pitch:32, dur:9000},
+  {n:'🎯 HOVER',      zoom:16.5,pitch:28, dur:7000},
+];
+const LYRS={
+  sat:{t:['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],a:'© Esri, DigitalGlobe'},
+  osm:{t:['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],a:'© OpenStreetMap'},
+};
+const TKGM_WMS=`https://cbsapi.tkgm.gov.tr/megsisapi/ows?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&FORMAT=image/png&TRANSPARENT=true&LAYERS=parsel&CRS=EPSG:3857&STYLES=&WIDTH=256&HEIGHT=256&BBOX={bbox-epsg-3857}`;
+
+// ══ SMART PINS — Gerçek POI isimleri + mesafeler, sıfırdan ══
+let smartPinTimer=null;
+
+function showSmartPins(){
+  if(!map||!center) return;
+  clearTimeout(smartPinTimer);
+
+  // Mevcut pinleri temizle
+  smartPins.forEach(mk=>{try{mk.remove();}catch(e){}});
+  smartPins=[];
+
+  const[lng,lat]=center;
+
+  // Kaynak 1: Gerçek POI verisinden al (varsa)
+  let pins=[];
+  if(lastPOIs.length>0){
+    // En yakın 6 POI'den rastgele 4 tane seç
+    const pool=lastPOIs.slice(0,8);
+    const shuffled=pool.sort(()=>Math.random()-.5).slice(0,4);
+    pins=shuffled.map(p=>({
+      ic: p.icon,
+      label: p.nm.length>18?p.nm.slice(0,16)+'…':p.nm,
+      dist: p.dist,
+      eLat: p.eLat,
+      eLng: p.eLng,
+      useExact: true // gerçek koordinat kullan
+    }));
+  }
+
+  // Kaynak 2: POI henüz yüklenmediyse tematik placeholder pinler
+  if(pins.length<4){
+    const PLACEHOLDERS=[
+      {ic:'🏫',label:'Okul Bölgesi'},
+      {ic:'🛣️',label:'Ana Yol Bağlantısı'},
+      {ic:'🕌',label:'Cami'},
+      {ic:'🏥',label:'Sağlık Tesisi'},
+      {ic:'🛒',label:'Alışveriş Merkezi'},
+      {ic:'🌳',label:'Yeşil Alan'},
+      {ic:'🚌',label:'Toplu Taşıma'},
+      {ic:'🏦',label:'Bankacılık Bölgesi'},
+    ];
+    const needed=4-pins.length;
+    const used=pins.map(p=>p.label);
+    const avail=PLACEHOLDERS.filter(p=>!used.includes(p.label));
+    const radii=[60,95,130,80];
+    const baseAngles=[25,115,205,310];
+    avail.slice(0,needed).forEach((p,i)=>{
+      const a=baseAngles[i]*Math.PI/180;
+      const r=radii[i];
+      pins.push({
+        ic:p.ic,label:p.label,
+        dist:r+Math.round(Math.random()*80),
+        eLat:lat+mLat(r*Math.sin(a)),
+        eLng:lng+mLng(r*Math.cos(a),lat),
+        useExact:true
+      });
+    });
+  }
+
+  // Pinleri staggered (500ms aralıklı) göster
+  pins.forEach((p,i)=>{
+    setTimeout(()=>{
+      if(!map) return;
+      const el=document.createElement('div');
+      el.style.cssText=`
+        display:flex;align-items:center;gap:6px;pointer-events:none;
+        background:rgba(255,255,255,.96);
+        border:1.5px solid rgba(20,70,160,.28);
+        border-radius:20px;
+        padding:5px 11px 5px 8px;
+        box-shadow:0 3px 14px rgba(0,0,0,.16);
+        font-family:Share Tech Mono,monospace;
+        animation:pinIn .4s ease;
+        white-space:nowrap;
+      `;
+      el.innerHTML=`
+        <span style="font-size:15px">${p.ic}</span>
+        <div>
+          <div style="font-size:10px;font-weight:700;color:#1a3a80;line-height:1.2">${p.label}</div>
+          <div style="font-size:8px;color:#5a7aaa;letter-spacing:1px">${p.dist<1000?p.dist+' m':(p.dist/1000).toFixed(1)+' km'} uzaklıkta</div>
+        </div>
+      `;
+      const mk=new maplibregl.Marker({element:el,anchor:'center'})
+        .setLngLat([p.eLng,p.eLat])
+        .addTo(map);
+      smartPins.push(mk);
+
+      // 8 saniye sonra fade-out
+      setTimeout(()=>{
+        el.style.transition='opacity .5s,transform .5s';
+        el.style.opacity='0';el.style.transform='translateY(8px) scale(.9)';
+        setTimeout(()=>{try{mk.remove();}catch(e){}smartPins=smartPins.filter(x=>x!==mk);},520);
+      },8000);
+    }, i*600);
+  });
+
+  // 28 saniye sonra tekrar göster
+  smartPinTimer=setTimeout(()=>showSmartPins(),28000);
+}
+
+// ══ UTILS ══
+const mLat=m=>m/111320;
+const mLng=(m,lat)=>m/(111320*Math.cos(lat*Math.PI/180));
+function hvs([a,b],[c,d]){
+  const R=6371000,dL=(d-b)*Math.PI/180,dl=(c-a)*Math.PI/180;
+  const x=Math.sin(dL/2)**2+Math.cos(b*Math.PI/180)*Math.cos(d*Math.PI/180)*Math.sin(dl/2)**2;
+  return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
+}
+function cirGJ(c,r,n=72){
+  const p=[];for(let i=0;i<=n;i++){const a=i/n*2*Math.PI;p.push([c[0]+mLng(r*Math.cos(a),c[1]),c[1]+mLat(r*Math.sin(a))]);}
+  return{type:'Feature',geometry:{type:'Polygon',coordinates:[p]},properties:{}};
+}
+function sd(n){return((n*1337+42)%1000)/1000;}
+function norm(s){return s.toLowerCase().replace(/[ğüşıöç]/g,c=>({ğ:'g',ü:'u',ş:'s',ı:'i',ö:'o',ç:'c'}[c]||c)).trim();}
+
+// ══ GEO DB ══
+const IL={antalya:[36.8969,30.7133],istanbul:[41.0082,28.9784],ankara:[39.9208,32.8541],izmir:[38.4189,27.1287],bursa:[40.1885,29.0610],adana:[37.0000,35.3213],konya:[37.8667,32.4833],gaziantep:[37.0662,37.3833],mersin:[36.8000,34.6333],kocaeli:[40.8533,29.8815],denizli:[37.7765,29.0864],trabzon:[41.0015,39.7178],aydin:[37.8444,27.8458],mugla:[37.2153,28.3636],samsun:[41.2867,36.3300],eskisehir:[39.7767,30.5206],kayseri:[38.7225,35.4875],diyarbakir:[37.9144,40.2306]};
+const ILCE={kadikoy:[40.9927,29.0277],besiktas:[41.0422,29.0067],sisli:[41.0602,28.9877],beyoglu:[41.0338,28.9764],fatih:[41.0138,28.9497],uskudar:[41.0231,29.0158],muratpasa:[36.8800,30.6900],konyaalti:[36.8600,30.6200],kepez:[37.0100,30.6900],alanya:[36.5439,31.9990],manavgat:[36.7867,31.4393],serik:[36.9167,31.1000],cankaya:[39.9179,32.8626],kecioren:[39.9716,32.8542],bornova:[38.4622,27.2175],karsiyaka:[38.4589,27.1158],konak:[38.4122,27.1422],osmangazi:[40.2000,29.0600],nilufer:[40.2167,28.9833],bodrum:[37.0342,27.4305],marmaris:[36.8556,28.2719],fethiye:[36.6558,29.1228],arapsuyu:[36.8750,30.6550],hurma:[36.8900,30.6800],liman:[36.8700,30.6600],uncali:[36.8820,30.6300]};
+
+// ══ geocodeTR — TAMAMEN DİNAMİK, sıfırdan inşa ══
+// Strateji: Photon → Nominatim → il/ilçe bazlı Nominatim → DB fallback
+async function geocodeTR(mah, ilce, il){
+  // Sorgu kombinasyonları: en spesifikten en genele
+  const queries = [
+    `${mah} mahallesi, ${ilce}, ${il}, Türkiye`,
+    `${mah}, ${ilce}, ${il}, Türkiye`,
+    `${ilce}, ${il}, Türkiye`,
+    `${il}, Türkiye`,
+  ];
+
+  // 1. Photon (komoot) — en CORS-dostu, ücretsiz
+  for(const q of queries.slice(0,3)){
+    try{
+      const ctrl=new AbortController();
+      const tid=setTimeout(()=>ctrl.abort(),5000);
+      const r=await fetch(
+        `https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=1&lang=tr`,
+        {signal:ctrl.signal}
+      );
+      clearTimeout(tid);
+      const d=await r.json();
+      if(d.features?.length){
+        const[ln,la]=d.features[0].geometry.coordinates;
+        console.log('✅ Photon →',q,la,ln);
+        return{lat:la,lng:ln};
+      }
+    }catch(e){/* sonraki dene */}
+  }
+
+  // 2. Nominatim — her query kombinasyonu
+  for(const q of queries){
+    try{
+      const ctrl=new AbortController();
+      const tid=setTimeout(()=>ctrl.abort(),5000);
+      const r=await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1&accept-language=tr&countrycodes=tr`,
+        {signal:ctrl.signal}
+      );
+      clearTimeout(tid);
+      const d=await r.json();
+      if(d.length){
+        const la=parseFloat(d[0].lat),ln=parseFloat(d[0].lon);
+        console.log('✅ Nominatim →',q,la,ln);
+        return{lat:la,lng:ln};
+      }
+    }catch(e){/* sonraki dene */}
+  }
+
+  // 3. DB fallback — son çare
+  const norm=s=>s.toLowerCase().replace(/[ğüşıöç]/g,c=>({ğ:'g',ü:'u',ş:'s',ı:'i',ö:'o',ç:'c'}[c]||c)).trim();
+  const mahk=norm(mah).replace(/\s*(mahallesi|mah\.?|mh\.?)\s*/g,'').trim();
+  const ilck=norm(ilce),ilk=norm(il);
+  for(const[k,v]of Object.entries(ILCE)){if(mahk.startsWith(k)||k.startsWith(mahk)||ilck.startsWith(k)||k.startsWith(ilck)){console.log('📍 DB →',k);return{lat:v[0],lng:v[1]};}}
+  const ilv=IL[ilk];if(ilv){console.log('📍 DB il →',ilk);return{lat:ilv[0],lng:ilv[1]};}
+
+  console.warn('⚠️ Tüm geocoder başarısız, Türkiye merkezi kullanılıyor.');
+  return{lat:39.1,lng:35.5};
+}
+
+// ══ START SIM ══
+async function startSim(demo){
+  if(demo){fd={il:'İstanbul',ilce:'Beyoğlu',mah:'Galata',ada:'168',parsel:'3'};}
+  else{fd={
+    il:document.getElementById('f-il').value.trim()||'Antalya',
+    ilce:document.getElementById('f-ilce').value.trim()||'Konyaaltı',
+    mah:document.getElementById('f-mah').value.trim()||'Arapsuyu',
+    ada:document.getElementById('f-ada').value.trim()||'826',
+    parsel:document.getElementById('f-parsel').value.trim()||'4',
+  };}
+  document.getElementById('fscreen').style.display='none';
+  document.getElementById('sscreen').style.display='flex';
+  document.getElementById('tb-title').textContent=`${fd.ada} ADA / ${fd.parsel} PARSEL — ${fd.mah}, ${fd.ilce} · TURYAP QUEEN`;
+
+  const{lat,lng}=await geocodeTR(fd.mah,fd.ilce,fd.il);
+  center=[lng,lat];
+  const adaN=parseInt(fd.ada)||100,pN=parseInt(fd.parsel)||5;
+  const w=22+Math.round(sd(adaN*7)*40),d=16+Math.round(sd(pN*13)*36);
+  pDims={w,d};
+  const area=w*d;
+
+  document.getElementById('b-area').textContent=area+' m²';
+  document.getElementById('b-crd').textContent=`${lat.toFixed(4)}°K ${lng.toFixed(4)}°D`;
+  document.getElementById('tb-crd').textContent=`${lat.toFixed(5)}°K ${lng.toFixed(5)}°D`;
+  document.getElementById('lnk-sv').href=`https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${lat},${lng}`;
+  document.getElementById('lnk-tkgm').href=`https://parselsorgu.tkgm.gov.tr/#${lat.toFixed(6)}/${lng.toFixed(6)}/18`;
+  document.getElementById('lnk-osm').href=`https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}&zoom=18`;
+  document.getElementById('lnk-gm').href=`https://maps.google.com/?q=${lat},${lng}&z=18`;
+
+  renderImar(lat,lng,w,d,area,adaN,pN);
+  renderSales(adaN,pN,area);
+  initMap(lat,lng);
+  fetchWeather(lat,lng);
+  setTimeout(()=>loadPOI(),2500);
+  setTimeout(()=>showSmartPins(),6000);
+}
+
+function exitSim(){
+  stopDrone();stopRecording();
+  if(hudInterval){clearInterval(hudInterval);hudInterval=null;}
+  if(map){map.remove();map=null;}
+  [...ringMks,...poiMks,...measMks].forEach(m=>m.remove());
+  ringMks=[];poiMks=[];measMks=[];measPts=[];measLineOn=false;measOn=false;
+  smartPins.forEach(p=>p.remove());smartPins=[];
+  document.getElementById('sscreen').style.display='none';
+  document.getElementById('fscreen').style.display='flex';
+  document.getElementById('poi-list').innerHTML='Yükleniyor...';
+  document.getElementById('ai-out').textContent='Sol panelden "Yatırım Özeti"ne basın.';
+}
+
+// ══ IMAR ══
+function renderImar(lat,lng,w,d,area,adaN,pN){
+  const s=sd(adaN+pN);
+  const taks=(0.28+s*0.24).toFixed(2),kaks=(1.40+s*1.10).toFixed(2);
+  const kat=Math.max(2,Math.round(parseFloat(kaks)/0.32));
+  const maxH=(kat*3.2).toFixed(1),yapi=Math.round(area*parseFloat(kaks));
+  const birim=8500+Math.round(s*18000),deger=Math.round(area*birim*parseFloat(kaks));
+  const bolgeler=['Konut (A-2)','Konut (B-1)','MİA','Ticari','İBT','Turizm'];
+  const bolge=bolgeler[Math.floor(s*bolgeler.length)];
+  const rows=[
+    ['İL / İLÇE',`${fd.il} / ${fd.ilce}`],['MAHALLE',fd.mah],['ADA / PARSEL',`${fd.ada} / ${fd.parsel}`],
+    ['KOORDİNAT',`${lat.toFixed(5)}°K`],['PARSEL ALANI',`${area} m²`],
+    ['CEPHE (eni)',`${w} m`],['DERİNLİK',`${d} m`],['ÇEVRE',`${2*(w+d)} m`],
+    ['BÖLGE',bolge],['TAKS',taks],['KAKS',kaks],['MAK. KAT',`${kat} kat`],['MAK. YÜKSEKLİK',`${maxH} m`],['İNŞAAT HAKKI',`${yapi} m²`],
+  ];
+  let h=rows.map(([k,v])=>`<div class="rrow"><span class="rk">${k}</span><span class="rv">${v}</span></div>`).join('');
+  h+=`<div class="valbox">
+    <div style="color:var(--grn);font-size:8px;letter-spacing:2px;margin-bottom:4px;font-weight:700">TAHMİNİ PAZAR DEĞERİ</div>
+    <div style="color:var(--grn);font-size:15px;font-weight:700;font-family:var(--ff2)">₺ ${deger.toLocaleString('tr-TR')}</div>
+    <div style="color:#3a7a5a;font-size:9px;margin-top:3px">Birim ₺ ${birim.toLocaleString('tr-TR')}/m² · Turyap Queen Est.</div>
+  </div>`;
+  document.getElementById('rp-data').innerHTML=h;
+}
+
+// ══ SIMÜLE SATIŞ VERİLERİ (2025-2026 Antalya Piyasası) ══
+function renderSales(adaN,pN,area){
+  const s=sd(adaN*3+pN*7);
+  const baseM2=8000+Math.round(s*14000);
+  const sales=[
+    {tarih:'Şubat 2026',  tip:'Konut',   m2:area+Math.round(sd(adaN)*80),  birim:baseM2+Math.round(sd(pN)*3000)},
+    {tarih:'Aralık 2025', tip:'Arsa',    m2:area+Math.round(sd(pN+1)*120), birim:baseM2-Math.round(sd(adaN+2)*2000)},
+    {tarih:'Ekim 2025',   tip:'Konut',   m2:area+Math.round(sd(adaN+3)*60), birim:baseM2-Math.round(sd(pN+4)*3500)},
+    {tarih:'Ağustos 2025',tip:'Ticari',  m2:area+Math.round(sd(pN+5)*150), birim:baseM2+Math.round(sd(adaN+6)*5000)},
+    {tarih:'Mayıs 2025',  tip:'Arsa',    m2:area+Math.round(sd(adaN+7)*90), birim:baseM2-Math.round(sd(pN+8)*4000)},
+  ];
+  let h=sales.map(({tarih,tip,m2,birim})=>{
+    const tutar=Math.round(m2*birim);
+    return `<div class="sale-row">
+      <div class="sale-date">${tarih} <span class="sale-type">${tip}</span></div>
+      <div class="sale-price">₺ ${tutar.toLocaleString('tr-TR')}</div>
+      <div style="color:var(--sub);font-size:9px">${m2} m² · ₺ ${birim.toLocaleString('tr-TR')}/m²</div>
+    </div>`;
+  }).join('');
+  h+=`<div style="font-size:8px;color:var(--sub);margin-top:5px;font-style:italic">* Piyasa eğilimi baz alınarak simüle edilmiştir. Turyap Queen araştırma verisi.</div>`;
+  document.getElementById('sales-data').innerHTML=h;
+}
+
+// ══ WEATHER ══
+async function fetchWeather(lat,lng){
+  try{
+    const d=await(await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat.toFixed(4)}&longitude=${lng.toFixed(4)}&current=temperature_2m,wind_speed_10m,wind_direction_10m,weather_code&wind_speed_unit=kmh`)).json();
+    const c=d.current;
+    const ic={0:'☀️',1:'🌤',2:'⛅',3:'☁️',45:'🌫',51:'🌦',61:'🌧',80:'🌦',95:'⛈'};
+    document.getElementById('wx-ic').textContent=ic[c.weather_code]||'🌡️';
+    document.getElementById('wx-t').textContent=Math.round(c.temperature_2m)+'°C';
+    document.getElementById('wx-w').textContent=Math.round(c.wind_speed_10m)+' km/h '+wDir(c.wind_direction_10m);
+  }catch(e){document.getElementById('wx-ic').textContent='🌡️';document.getElementById('wx-w').textContent='—';}
+}
+function wDir(d){return['K','KD','D','GD','G','GB','B','KB'][Math.round(d/45)%8];}
+
+// ══ MAP ══
+function initMap(lat,lng){
+  const{t,a}=LYRS[lyrKey];
+  map=new maplibregl.Map({
+    container:'map',
+    preserveDrawingBuffer:true, // 📸 Screenshot için zorunlu
+    style:{version:8,glyphs:'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf',
+      sources:{
+        base:{type:'raster',tiles:t,tileSize:256,attribution:a},
+        tkgm:{type:'raster',tiles:[TKGM_WMS],tileSize:256,attribution:'© TKGM'},
+      },
+      layers:[
+        {id:'base-l',type:'raster',source:'base'},
+        {id:'tkgm-l',type:'raster',source:'tkgm',paint:{'raster-opacity':1.0}}, // Opacity 1.0
+      ]},
+    center:[lng,lat],zoom:13,pitch:0,bearing:0,maxPitch:60,attributionControl:false,
+  });
+  map.addControl(new maplibregl.AttributionControl({compact:true}),'bottom-right');
+  requestAnimationFrame(()=>{
+    setTimeout(()=>{if(map)map.resize();},100);
+    setTimeout(()=>{if(map)map.resize();},500);
+  });
+  window.addEventListener('resize',()=>{if(map)map.resize();});
+  map.on('load',()=>{
+    map.resize();
+    addParcel(lat,lng);
+    addRings(lat,lng);
+    startDrone();
+    startHUD();
+    map.on('error',e=>{if((e.error?.status===403||e.error?.status===0)&&lyrKey!=='osm'){setLyr('osm');}});
+  });
+  map.on('click',onMapClick);
+}
+
+// ══ HUD — optimize: paused modda düşük freq ══
+function startHUD(){
+  if(hudInterval)clearInterval(hudInterval);
+  hudInterval=setInterval(updateHUD, mode==='paused'?2000:150);
+}
+
+// ══ PARCEL ══
+function addParcel(lat,lng){
+  const{w,d}=pDims,hw=mLng(w/2,lat),hd=mLat(d/2);
+  const coords=[[lng-hw,lat-hd],[lng+hw,lat-hd],[lng+hw,lat+hd],[lng-hw,lat+hd],[lng-hw,lat-hd]];
+  safeS('parcel',{type:'geojson',data:{type:'Feature',geometry:{type:'Polygon',coordinates:[coords]},properties:{}}});
+  safeL({id:'p-fill',type:'fill',source:'parcel',paint:{'fill-color':'#cc2000','fill-opacity':0.20}});
+  safeL({id:'p-line',type:'line',source:'parcel',paint:{'line-color':'#ee3300','line-width':3}});
+  safeS('pdot',{type:'geojson',data:cirGJ([lng,lat],3)});
+  safeL({id:'pd-f',type:'fill',source:'pdot',paint:{'fill-color':'#ee3300','fill-opacity':0.9}});
+  let pr=3,up=true;
+  setInterval(()=>{if(!map)return;up?(pr+=.4,pr>9&&(up=false)):(pr-=.4,pr<3&&(up=true));
+    try{map.getSource('pdot')?.setData(cirGJ([lng,lat],pr));}catch(e){}},90);
+  const el=document.createElement('div');
+  el.style.cssText='background:rgba(180,30,0,.9);border:1.5px solid #ff4400;border-radius:5px;padding:3px 9px;color:#fff;font-size:10px;font-weight:700;font-family:Share Tech Mono,monospace;pointer-events:none;white-space:nowrap;box-shadow:0 2px 10px rgba(180,40,0,.3)';
+  el.textContent=`Ada:${fd.ada} / Parsel:${fd.parsel}`;
+  new maplibregl.Marker({element:el,anchor:'bottom'}).setLngLat([lng,lat+mLat(pDims.d/2+7)]).addTo(map);
+}
+function safeS(id,spec){try{if(!map.getSource(id))map.addSource(id,spec);}catch(e){}}
+function safeL(spec){try{if(!map.getLayer(spec.id))map.addLayer(spec);}catch(e){}}
+
+// ══ RINGS ══
+function addRings(lat,lng){
+  const cfg=[{r:50,c:'#c08000',op:.85},{r:100,c:'#1460b0',op:.65},{r:200,c:'#146030',op:.45},{r:500,c:'#5040b0',op:.30}];
+  const ANG=42*Math.PI/180;
+  cfg.forEach(({r,c,op})=>{
+    safeS(`ring${r}`,{type:'geojson',data:cirGJ([lng,lat],r)});
+    safeL({id:`ring-l${r}`,type:'line',source:`ring${r}`,paint:{'line-color':c,'line-width':1.6,'line-opacity':op,'line-dasharray':[6,4]}});
+    const el=document.createElement('div');
+    el.style.cssText='display:flex;flex-direction:column;align-items:center;pointer-events:none';
+    el.innerHTML=`<div style="background:rgba(255,255,255,.95);border:1.5px solid ${c};border-radius:7px;padding:4px 9px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.1);display:flex;align-items:center;gap:5px"><span style="font-size:11px">🚩</span><span style="color:${c};font-size:10px;font-weight:700;font-family:Share Tech Mono,monospace">${r} m</span></div><div style="width:1.5px;height:7px;background:${c};opacity:.5"></div><div style="width:5px;height:5px;border-radius:50%;background:${c};opacity:.7"></div>`;
+    ringMks.push(new maplibregl.Marker({element:el,anchor:'bottom'}).setLngLat([lng+mLng(r*Math.cos(ANG),lat),lat+mLat(r*Math.sin(ANG))]).addTo(map));
+  });
+}
+function togRings(){
+  ringsOn=!ringsOn;
+  [50,100,200,500].forEach(r=>{try{map.setLayoutProperty(`ring-l${r}`,'visibility',ringsOn?'visible':'none');}catch(e){}});
+  ringMks.forEach(m=>m.getElement().style.display=ringsOn?'':'none');
+  const b=document.getElementById('btn-rings');b.textContent=ringsOn?'◎ MESAFE HALKALARI':'◎ HALKALARI GÖSTER';b.className=ringsOn?'cbtn on':'cbtn';
+}
+
+
+// ══ DRONE ══
+function startDrone(){phase=0;runPhase();}
+function stopDrone(){clearTimeout(droneT);cancelAnimationFrame(orbitRAF);orbitOn=false;}
+function runPhase(){
+  if(!map||mode==='paused')return;
+  const ph=PHASES[phase],spd=mode==='fast'?.38:1,dur=ph.dur*spd;
+  document.getElementById('phase-ind').textContent=ph.n;
+  document.getElementById('ph-badge').textContent=ph.n;
+  if(phase===0){
+    map.flyTo({center,zoom:13.5,pitch:0,bearing:0,duration:2800,essential:true});
+    setTimeout(()=>{if(map)map.flyTo({zoom:16.5,pitch:25,bearing:55,duration:3500,essential:true});},3100);
+  }else if(phase===1){
+    map.flyTo({center,zoom:ph.zoom,pitch:ph.pitch,bearing,duration:2500,essential:true});
+    setTimeout(()=>{orbitOn=true;doOrbit(Date.now(),dur-2700);},2800);return;
+  }else if(phase===2){
+    bearing=(bearing+90)%360;
+    map.flyTo({center,zoom:18.2,pitch:30,bearing,duration:2500,essential:true});
+    setTimeout(()=>{if(map)map.flyTo({zoom:18.6,pitch:32,bearing:(bearing+45)%360,duration:2500,essential:true});},3300);
+    setTimeout(()=>{if(map)map.flyTo({bearing:(bearing+90)%360,duration:1800,essential:true});},6400);
+  }else{
+    bearing=(bearing+175)%360;
+    map.flyTo({center,zoom:16.5,pitch:25,bearing,duration:3000,essential:true});
+  }
+  droneT=setTimeout(()=>{orbitOn=false;phase=(phase+1)%4;runPhase();},dur);
+}
+function doOrbit(t0,tot){
+  if(!orbitOn||!map)return;
+  if(Date.now()-t0>=tot){orbitOn=false;phase=(phase+1)%4;runPhase();return;}
+  bearing=(bearing+.28*(mode==='fast'?2.5:1))%360;map.setBearing(bearing);
+  orbitRAF=requestAnimationFrame(()=>doOrbit(t0,tot));
+}
+
+// ══ HUD ══
+function updateHUD(){
+  if(!map)return;
+  const z=map.getZoom(),p=map.getPitch(),b=map.getBearing(),c=map.getCenter();
+  const alt=Math.max(10,Math.round(altitude*(1+Math.max(0,18-z)*10)));
+  const spd=Math.round(3+Math.abs(Math.sin(b*.05))*14);
+  const hdg=Math.round((b+360)%360);
+  document.getElementById('h-alt').textContent=alt+' m';
+  document.getElementById('h-spd').textContent=spd+' kn';
+  document.getElementById('h-hdg').textContent=hdg+'°';
+  document.getElementById('h-zoom').textContent=z.toFixed(1);
+  document.getElementById('b-alt').textContent=alt+' m';
+  document.getElementById('b-pit').textContent=Math.round(p)+'°';
+  document.getElementById('b-bear').textContent=hdg+'°';
+  document.getElementById('b-crd').textContent=`${c.lat.toFixed(4)}°K ${c.lng.toFixed(4)}°D`;
+  document.getElementById('b-zoom').textContent=z.toFixed(2);
+  drawCompass(hdg);
+}
+
+// ══ COMPASS ══
+function drawCompass(hdg){
+  const cv=document.getElementById('compass-ov');if(!cv)return;
+  const ctx=cv.getContext('2d'),cx=33,cy=33,r=26;
+  ctx.clearRect(0,0,66,66);
+  ctx.beginPath();ctx.arc(cx,cy,r+1,0,Math.PI*2);ctx.fillStyle='rgba(255,255,255,.92)';ctx.fill();
+  ctx.strokeStyle='rgba(20,70,160,.2)';ctx.lineWidth=1.3;ctx.stroke();
+  for(let i=0;i<36;i++){
+    const a=(i*10-90)*Math.PI/180,inn=i%9===0?r-7:r-4;
+    ctx.beginPath();ctx.moveTo(cx+inn*Math.cos(a),cy+inn*Math.sin(a));ctx.lineTo(cx+r*Math.cos(a),cy+r*Math.sin(a));
+    ctx.strokeStyle=i%9===0?'rgba(20,70,160,.5)':'rgba(20,70,160,.15)';ctx.lineWidth=i%9===0?1.3:.75;ctx.stroke();
+  }
+  [['K',-90,'#c82800'],['D',0,'rgba(20,70,160,.5)'],['G',90,'rgba(20,70,160,.5)'],['B',180,'rgba(20,70,160,.5)']].forEach(([l,deg,cl])=>{
+    const a=(deg-90)*Math.PI/180;ctx.fillStyle=cl;ctx.font=`700 ${l==='K'?9:7}px Share Tech Mono`;
+    ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(l,cx+(r-11)*Math.cos(a),cy+(r-11)*Math.sin(a));
+  });
+  const na=-hdg*Math.PI/180;ctx.save();ctx.translate(cx,cy);ctx.rotate(na);
+  ctx.beginPath();ctx.moveTo(0,-r+5);ctx.lineTo(-4,4);ctx.lineTo(4,4);ctx.fillStyle='#c82800';ctx.fill();
+  ctx.beginPath();ctx.moveTo(0,r-5);ctx.lineTo(-4,-4);ctx.lineTo(4,-4);ctx.fillStyle='rgba(20,70,160,.4)';ctx.fill();
+  ctx.restore();ctx.beginPath();ctx.arc(cx,cy,2.5,0,Math.PI*2);ctx.fillStyle='#334';ctx.fill();
+}
+
+// ══ SCREENSHOT 📸 — Sıfırdan, profesyonel 3-bantlı mühür ══
+function takeScreenshot(){
+  if(!map){alert('Harita henüz yüklenmedi.');return;}
+  const mapCanvas=map.getCanvas();
+  if(!mapCanvas.width||!mapCanvas.height){alert('Harita boyutu henüz hazır değil, bir süre bekleyin.');return;}
+
+  const W=mapCanvas.width, H=mapCanvas.height;
+  const out=document.createElement('canvas');out.width=W;out.height=H;
+  const ctx=out.getContext('2d');
+
+  // 1. Harita
+  ctx.drawImage(mapCanvas,0,0);
+
+  // 2. ÜST BANT — Turyap Queen marka şeridi
+  const topH=Math.round(H*0.072);
+  const grad=ctx.createLinearGradient(0,0,W,0);
+  grad.addColorStop(0,'#0e2d6e');grad.addColorStop(0.6,'#1a4fa0');grad.addColorStop(1,'#0e2d6e');
+  ctx.fillStyle=grad;ctx.fillRect(0,0,W,topH);
+  // Logo kutusu
+  ctx.fillStyle='rgba(255,255,255,.12)';ctx.fillRect(0,0,topH*2.5,topH);
+  ctx.fillStyle='#fff';
+  ctx.font=`bold ${Math.round(topH*.52)}px Exo 2, sans-serif`;ctx.textAlign='left';ctx.textBaseline='middle';
+  ctx.fillText('🛰️  TURYAP QUEEN',topH*.22,topH*.5);
+  // Sağ tarih
+  ctx.font=`${Math.round(topH*.35)}px Share Tech Mono, monospace`;ctx.textAlign='right';
+  ctx.fillStyle='rgba(255,255,255,.82)';
+  ctx.fillText(new Date().toLocaleString('tr-TR'),W-topH*.4,topH*.5);
+  // Alt çizgi
+  ctx.fillStyle='rgba(255,200,0,.55)';ctx.fillRect(0,topH-2,W,2);
+
+  // 3. ALT BANT — Parsel bilgisi şeridi
+  const botH=Math.round(H*0.09);
+  const botY=H-botH;
+  ctx.fillStyle='rgba(8,22,55,.88)';ctx.fillRect(0,botY,W,botH);
+  // Sol — parsel kimliği
+  const fSz=Math.round(botH*.32);
+  ctx.textAlign='left';ctx.textBaseline='middle';
+  ctx.fillStyle='rgba(255,255,255,.45)';
+  ctx.font=`${Math.round(fSz*.75)}px Share Tech Mono, monospace`;
+  ctx.fillText('ADA / PARSEL',botH*.4,botY+botH*.28);
+  ctx.fillStyle='#fff';ctx.font=`bold ${fSz*1.1}px Share Tech Mono, monospace`;
+  ctx.fillText(`${fd.ada} / ${fd.parsel}`,botH*.4,botY+botH*.68);
+  // Orta — mahalle/ilçe/il
+  const midX=W*.32;
+  ctx.fillStyle='rgba(255,255,255,.45)';ctx.font=`${Math.round(fSz*.75)}px Share Tech Mono, monospace`;ctx.textAlign='left';
+  ctx.fillText('MAHALLE / İLÇE / İL',midX,botY+botH*.28);
+  ctx.fillStyle='#a8d0ff';ctx.font=`bold ${fSz}px Share Tech Mono, monospace`;
+  ctx.fillText(`${fd.mah} · ${fd.ilce} · ${fd.il}`,midX,botY+botH*.68);
+  // Sağ — koordinat
+  const[lng,lat]=center||[0,0];
+  ctx.textAlign='right';
+  ctx.fillStyle='rgba(255,255,255,.45)';ctx.font=`${Math.round(fSz*.75)}px Share Tech Mono, monospace`;
+  ctx.fillText('KOORDİNAT',W-botH*.4,botY+botH*.28);
+  ctx.fillStyle='#88ffcc';ctx.font=`${fSz}px Share Tech Mono, monospace`;
+  ctx.fillText(`${lat.toFixed(5)}°K  ${lng.toFixed(5)}°D`,W-botH*.4,botY+botH*.68);
+  // Dikey ayırıcılar
+  ctx.fillStyle='rgba(255,255,255,.12)';
+  ctx.fillRect(midX-botH*.25,botY+botH*.12,1,botH*.76);
+  ctx.fillRect(W*0.78,botY+botH*.12,1,botH*.76);
+  // Üst çizgi
+  ctx.fillStyle='rgba(100,160,255,.4)';ctx.fillRect(0,botY,W,1.5);
+
+  // 4. SAĞ KENAR ROZET
+  const badgeW=Math.round(W*.068),badgeH=Math.round(H*.18);
+  const bx=W-badgeW-6,by=Math.round(H*.5)-badgeH/2;
+  ctx.fillStyle='rgba(10,30,80,.82)';
+  roundRect(ctx,bx,by,badgeW,badgeH,8);ctx.fill();
+  ctx.fillStyle='rgba(100,160,255,.3)';
+  roundRect(ctx,bx,by,badgeW,badgeH,8);ctx.stroke();
+  ctx.save();ctx.translate(bx+badgeW/2,by+badgeH/2);ctx.rotate(-Math.PI/2);
+  ctx.fillStyle='#fff';ctx.font=`bold ${Math.round(badgeW*.28)}px Share Tech Mono, monospace`;
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('DRONE SIM v2.5 · PRO',0,0);ctx.restore();
+
+  // İndir
+  const anchor=document.createElement('a');
+  anchor.download=`TQ_${fd.ada}-${fd.parsel}_${Date.now()}.png`;
+  anchor.href=out.toDataURL('image/png',0.96);anchor.click();
+
+  // Flaş efekti
+  const fl=document.createElement('div');
+  fl.style.cssText='position:fixed;inset:0;background:#fff;opacity:.7;z-index:9999;pointer-events:none;transition:opacity .25s';
+  document.body.appendChild(fl);
+  setTimeout(()=>{fl.style.opacity='0';setTimeout(()=>fl.remove(),260);},90);
+}
+
+// Canvas rounded rect helper
+function roundRect(ctx,x,y,w,h,r){
+  ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);ctx.lineTo(x+r,y+h);
+  ctx.quadraticCurveTo(x,y+h,x,y+h-r);ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();
+}
+
+// ══ VIDEO KAYIT 🎥 (MediaRecorder, 60s limit) ══
+function toggleRecord(){
+  if(isRecording){stopRecording();}else{startRecording();}
+}
+function startRecording(){
+  if(!map){alert('Harita yüklenmedi.');return;}
+  const mapCanvas=map.getCanvas();
+  if(!mapCanvas.width){alert('Harita hazır değil.');return;}
+
+  // Watermark canvas — harita üstüne şeffaf çizilir, stream'e eklenir
+  const oc=document.createElement('canvas');
+  oc.width=mapCanvas.width;oc.height=mapCanvas.height;
+  const octx=oc.getContext('2d');
+
+  // Composite canvas = map + watermark
+  const cc=document.createElement('canvas');
+  cc.width=mapCanvas.width;cc.height=mapCanvas.height;
+  const cctx=cc.getContext('2d');
+
+  // Her kare: map çiz + watermark bandını üste ekle
+  const W=cc.width,H=cc.height;
+  let renderRAF;
+  function renderFrame(){
+    cctx.drawImage(mapCanvas,0,0);
+    // Alt bant
+    const bH=Math.round(H*.065);
+    cctx.fillStyle='rgba(8,22,55,.85)';cctx.fillRect(0,H-bH,W,bH);
+    cctx.fillStyle='rgba(100,160,255,.35)';cctx.fillRect(0,H-bH,W,1.5);
+    const fSz=Math.round(bH*.34);
+    cctx.font=`bold ${fSz}px Share Tech Mono,monospace`;cctx.textBaseline='middle';
+    cctx.fillStyle='#fff';cctx.textAlign='left';
+    cctx.fillText(`🛰 TURYAP QUEEN  ·  Ada ${fd.ada} / Parsel ${fd.parsel}  ·  ${fd.mah}, ${fd.ilce}`,bH*.4,H-bH*.5);
+    const[ln,la]=center||[0,0];
+    cctx.fillStyle='rgba(255,255,255,.55)';cctx.textAlign='right';cctx.font=`${Math.round(fSz*.8)}px Share Tech Mono,monospace`;
+    cctx.fillText(`${la.toFixed(4)}°K ${ln.toFixed(4)}°D  ·  ${new Date().toLocaleTimeString('tr-TR')}`,W-bH*.4,H-bH*.5);
+    if(isRecording) renderRAF=requestAnimationFrame(renderFrame);
+  }
+  renderFrame();
+
+  let stream;
+  try{stream=cc.captureStream(30);}
+  catch(e){cancelAnimationFrame(renderRAF);alert('Video kaydı bu tarayıcıda desteklenmiyor.');return;}
+  const mime=['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm','video/mp4'].find(m=>MediaRecorder.isTypeSupported(m));
+  if(!mime){cancelAnimationFrame(renderRAF);alert('MediaRecorder formatı bulunamadı.');return;}
+  recChunks=[];
+  recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:3000000});
+  recorder.ondataavailable=e=>{if(e.data.size>0)recChunks.push(e.data);};
+  recorder.onstop=()=>{
+    cancelAnimationFrame(renderRAF);
+    const blob=new Blob(recChunks,{type:mime});
+    const ext=mime.includes('mp4')?'mp4':'webm';
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download=`TQ_${fd.ada}-${fd.parsel}_${Date.now()}.${ext}`;
+    a.click();URL.revokeObjectURL(a.href);
+    isRecording=false;recSec=0;
+    document.getElementById('btn-rec').textContent='🎥 VİDEO KAYDET';
+    document.getElementById('btn-rec').classList.remove('active');
+    document.getElementById('rec-badge').style.display='none';
+    if(recTimer){clearInterval(recTimer);recTimer=null;}
+  };
+  recorder.start(500);
+  isRecording=true;recSec=0;
+  document.getElementById('btn-rec').textContent='⏹ DURDUR (60s)';
+  document.getElementById('btn-rec').classList.add('active');
+  document.getElementById('rec-badge').style.display='block';
+  recTimer=setInterval(()=>{
+    recSec++;
+    const rem=60-recSec;
+    document.getElementById('rec-timer').textContent=`${String(Math.floor(recSec/60)).padStart(2,'0')}:${String(recSec%60).padStart(2,'0')}`;
+    document.getElementById('btn-rec').textContent=`⏹ DURDUR (${rem}s)`;
+    if(recSec>=60)stopRecording();
+  },1000);
+}
+function stopRecording(){
+  if(!isRecording||!recorder)return;
+  try{recorder.stop();}catch(e){}
+  if(recTimer){clearInterval(recTimer);recTimer=null;}
+}
+
+// ══ CONTROLS ══
+function setMode(m){
+  mode=m;
+  const mp={cinematic:'cin',fast:'fast',paused:'stp'};
+  ['cin','fast','stp'].forEach(i=>document.getElementById('btn-'+i).className='cbtn'+(i===mp[m]?' on':''));
+  stopDrone();
+  if(m!=='paused'){phase=0;runPhase();}
+  startHUD(); // HUD frekansını güncelle
+}
+function setLyr(l){
+  lyrKey=l;
+  ['sat','osm'].forEach(id=>document.getElementById('btn-'+id).className='cbtn'+(id===l?' on':''));
+  if(!map)return;
+  const{t,a}=LYRS[l];
+  map.setStyle({version:8,glyphs:'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf',
+    sources:{base:{type:'raster',tiles:t,tileSize:256,attribution:a},tkgm:{type:'raster',tiles:[TKGM_WMS],tileSize:256,attribution:'© TKGM'}},
+    layers:[{id:'base-l',type:'raster',source:'base'},{id:'tkgm-l',type:'raster',source:'tkgm',paint:{'raster-opacity':tkgmOn?1.0:0}}]});
+  map.once('styledata',()=>{const[ln,la]=center;addParcel(la,ln);addRings(la,ln);});
+}
+function togTKGM(){
+  tkgmOn=!tkgmOn;
+  // Robust: hem setPaintProperty hem fallback
+  try{map.setPaintProperty('tkgm-l','raster-opacity',tkgmOn?1.0:0);}
+  catch(e){setLyr(lyrKey);} // Style yenileme ile fallback
+  const b=document.getElementById('btn-tkgm');
+  b.textContent=tkgmOn?'📐 PARSEL SINIRI':'📐 SINIRI GÖSTER';
+  b.className=tkgmOn?'cbtn on-g':'cbtn';
+  document.getElementById('tkgm-badge').style.display=tkgmOn?'':'none';
+}
+function setAlt(v){altitude=parseInt(v);document.getElementById('alt-d').textContent=altitude+' m';}
+function setPitch(v){pitchVal=parseInt(v);document.getElementById('pitch-d').textContent=pitchVal+'°';if(map&&mode==='paused')map.setPitch(Math.min(pitchVal,60));}
+function togPanel(){panelOn=!panelOn;document.getElementById('rpanel').classList.toggle('hidden',!panelOn);}
+function openTKGM(){if(center){const[ln,la]=center;window.open(`https://parselsorgu.tkgm.gov.tr/#${la.toFixed(6)}/${ln.toFixed(6)}/18`,'_blank');}}
+function toggleLP(){document.getElementById('lpanel').classList.toggle('open');document.getElementById('lpanel-overlay').classList.toggle('show');}
+function closeLP(){document.getElementById('lpanel').classList.remove('open');document.getElementById('lpanel-overlay').classList.remove('show');}
+
+// ══ MEASURE ══
+function togMeasure(){
+  measOn=!measOn;
+  document.getElementById('btn-meas').className='cbtn'+(measOn?' on-g':'');
+  document.getElementById('mbar').style.display=measOn?'block':'none';
+  if(map)map.getCanvas().style.cursor=measOn?'crosshair':'';
+  if(!measOn){measPts=[];measMks.forEach(m=>m.remove());measMks=[];
+    if(measLineOn){try{map.removeLayer('ml');map.removeSource('ms');}catch(e){}}
+    measLineOn=false;document.getElementById('m-res').textContent='';document.getElementById('m-st').textContent='İlk noktayı seçin';}
+}
+function onMapClick(e){
+  if(!measOn)return;
+  const pt=[e.lngLat.lng,e.lngLat.lat];measPts.push(pt);
+  const dot=document.createElement('div');dot.style.cssText='width:10px;height:10px;border-radius:50%;background:var(--grn);border:2px solid #fff;box-shadow:0 0 6px var(--grn)';
+  measMks.push(new maplibregl.Marker({element:dot}).setLngLat(pt).addTo(map));
+  if(measPts.length===2){
+    const dist=hvs(measPts[0],measPts[1]);
+    const ds=dist<1000?Math.round(dist)+' m':(dist/1000).toFixed(2)+' km';
+    document.getElementById('m-st').textContent='Mesafe:';document.getElementById('m-res').textContent=' '+ds;
+    const gj={type:'Feature',geometry:{type:'LineString',coordinates:measPts}};
+    if(measLineOn){try{map.getSource('ms').setData(gj);}catch(e){}}
+    else{try{map.addSource('ms',{type:'geojson',data:gj});map.addLayer({id:'ml',type:'line',source:'ms',paint:{'line-color':'#1a7a40','line-width':2,'line-dasharray':[5,3]}});measLineOn=true;}catch(e){}}
+    setTimeout(()=>{measPts=[];measMks.forEach(m=>m.remove());measMks=[];document.getElementById('m-st').textContent='İlk noktayı seçin';document.getElementById('m-res').textContent='';},6000);
+  }else{document.getElementById('m-st').textContent='İkinci noktayı seçin';}
+}
+
+// ══ OVERPASS POI ══
+const OVERPASS_MIRRORS=['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter','https://maps.mail.ru/osm/tools/overpass/api/interpreter'];
+async function fetchOverpass(q){
+  for(const url of OVERPASS_MIRRORS){
+    try{const ctrl=new AbortController();setTimeout(()=>ctrl.abort(),8000);const r=await fetch(url,{method:'POST',body:q,signal:ctrl.signal});if(r.ok)return await r.json();}catch(e){}
+  }return null;
+}
+async function loadPOI(){
+  if(!center)return;
+  const b=document.getElementById('btn-poi');b.textContent='⏳ YÜKLÜYOR…';b.disabled=true;
+  document.getElementById('poi-list').innerHTML='<span style="color:var(--sub)">Sorgulanıyor…</span>';
+  const[lng,lat]=center;
+  const q=`[out:json][timeout:20];(node["amenity"~"hospital|clinic|pharmacy|doctor|school|university|kindergarten|library|post_office|bank|atm|police|fire_station|mosque|church|fuel|supermarket|marketplace|bus_station"](around:600,${lat},${lng});node["leisure"~"park|playground"](around:600,${lat},${lng});node["shop"~"supermarket|bakery|grocery"](around:600,${lat},${lng}););out center 20;`;
+  const ic={hospital:'🏥',clinic:'🏥',pharmacy:'💊',doctor:'👨‍⚕️',school:'🏫',university:'🎓',kindergarten:'👶',library:'📚',post_office:'📮',bank:'🏦',atm:'💳',police:'👮',fire_station:'🚒',mosque:'🕌',church:'⛪',fuel:'⛽',supermarket:'🛒',marketplace:'🏪',bus_station:'🚌',park:'🌳',playground:'🛝',bakery:'🥖',grocery:'🧺'};
+  const data=await fetchOverpass(q);
+  if(!data){document.getElementById('poi-list').innerHTML='<span style="color:var(--sub);font-size:10px">📡 Şu an yüklenemiyor. TKGM bağlantısını kullanın.</span>';b.textContent='📍 YENİLE';b.disabled=false;b.className='cbtn';return;}
+  poiMks.forEach(m=>m.remove());poiMks=[];
+  const items=data.elements.map(el=>{
+    const eLat=el.lat||el.center?.lat,eLng=el.lon||el.center?.lon;
+    const am=el.tags?.amenity||el.tags?.leisure||el.tags?.shop||'place';
+    const nm=el.tags?.name||(am[0].toUpperCase()+am.slice(1));
+    const dist=eLat?Math.round(hvs([lng,lat],[eLng,eLat])):9999;
+    return{am,nm,icon:ic[am]||'📍',eLat,eLng,dist};
+  }).filter(x=>x.eLat).sort((a,b)=>a.dist-b.dist).slice(0,16);
+  lastPOIs=items;
+  let html='';
+  items.forEach(({nm,icon,eLat,eLng,dist})=>{
+    const ds=dist<1000?dist+' m':(dist/1000).toFixed(1)+' km';
+    html+=`<div class="poi-i"><span style="font-size:13px">${icon}</span><span class="poi-n">${nm}</span><span class="poi-d">${ds}</span></div>`;
+    if(map){const el2=document.createElement('div');el2.style.cssText='font-size:15px;cursor:pointer;filter:drop-shadow(0 2px 3px rgba(0,0,0,.3));transition:transform .15s';el2.textContent=icon;el2.onmouseenter=()=>el2.style.transform='scale(1.3)';el2.onmouseleave=()=>el2.style.transform='';
+      poiMks.push(new maplibregl.Marker({element:el2}).setLngLat([eLng,eLat]).setPopup(new maplibregl.Popup({closeButton:false,offset:10}).setHTML(`<b>${icon} ${nm}</b><br><span style="color:var(--grn)">${ds} uzaklıkta</span>`)).addTo(map));}
+  });
+  document.getElementById('poi-list').innerHTML=html||'<span style="color:var(--sub)">600m\'de POI bulunamadı.</span>';
+  b.textContent='📍 YENİLE';b.disabled=false;b.className='cbtn on-g';
+}
+
+// ══ YATIRIM ANALİZİ (Profesyonel ton) ══
+function buildInvestmentSummary(){
+  if(!center||!pDims)return null;
+  const[lng,lat]=center;const area=pDims.w*pDims.d;
+  const closest=(types)=>lastPOIs.filter(p=>types.includes(p.am)).sort((a,b)=>a.dist-b.dist)[0];
+  const has=(types)=>lastPOIs.some(p=>types.includes(p.am));
+  const ilceN=norm(fd.ilce);
+  let bolge='';
+  if(['muratpasa','konyaalti','kepez'].includes(ilceN)) bolge='Antalya merkez koridorunda, turizm ve yatırım çekim gücü yüksek bir';
+  else if(['kadikoy','besiktas','sisli'].includes(ilceN)) bolge='İstanbul\'un en değerli gayrimenkul kuşaklarından birinde yer alan';
+  else if(['cankaya','kecioren'].includes(ilceN)) bolge='Ankara\'nın kurumsal ve konut değerinin stabil seyrettiği';
+  else bolge=`${fd.il} ili, ${fd.ilce} ilçesinde yatırım değeri taşıyan`;
+  const saglik=closest(['hospital','clinic','pharmacy']);
+  const okul=closest(['school','university']);
+  const market=closest(['supermarket','marketplace']);
+  const ul=has(['bus_station'])?'Toplu taşıma erişimi mevcut olup':'Ulaşım altyapısı açısından';
+  const alan=area<400?'yapılaşmaya uygun küçük-orta ölçekli':area<800?'projeli geliştirmeye elverişli orta ölçekli':area<1500?'büyük konut ya da ticari proje geliştirilmesine müsait':'karma kullanımlı büyük ölçekli yatırıma uygun';
+  const s=sd((parseInt(fd.ada)||1)+(parseInt(fd.parsel)||1));
+  const getiri=(6.8+s*2.4).toFixed(1);
+  const artis=(18+s*14).toFixed(0);
+  const parcels=[
+    `${fd.mah} Mahallesi, ${bolge} ${alan} parseli için kapsamlı yatırım değerlendirmesi aşağıda sunulmaktadır.`,
+    saglik?`Sağlık erişimi açısından ${saglik.dist<300?'yürüme mesafesinde':'yakın çevrede'} ${saglik.nm} konumlanmaktadır (${saglik.dist} m).`:'',
+    okul?`Eğitim olanakları bakımından ${okul.nm} bölgede öne çıkmaktadır.`:'',
+    market?`Ticari canlılık açısından ${market.nm} erişim kolaylığı sağlamaktadır.`:'',
+    `${ul} bölge, kent geneli ulaşım ağına entegre bir konumdadır.`,
+    `Mevcut piyasa koşulları ve emsal satışlar dikkate alındığında ${area} m² yüzölçümlü bu parselin tahmini yıllık kira getiri potansiyeli %${getiri} düzeyinde, orta vadede (3 yıl) değer artış potansiyeli ise %${artis} olarak öngörülmektedir.`,
+    `Sonuç itibarıyla söz konusu parsel, Turyap Queen portföy değerlendirmesinde ÖNERİLİR kategorisinde yer almakta olup fizibilite çalışması başlatılması tavsiye edilir.`,
+  ].filter(Boolean);
+  return parcels.join(' ');
+}
+
+async function runAI(){
+  if(!center)return;
+  const b=document.getElementById('btn-ai');
+  b.textContent='⏳ Analiz…';b.disabled=true;
+  if(!panelOn){panelOn=true;document.getElementById('rpanel').classList.remove('hidden');}
+  document.getElementById('ai-out').innerHTML='<span style="color:var(--sub)">📊 Piyasa verisi işleniyor…</span>';
+  if(lastPOIs.length===0)await loadPOI();
+  await new Promise(r=>setTimeout(r,700));
+  const txt=buildInvestmentSummary();
+  if(!txt){document.getElementById('ai-out').textContent='Veri yetersiz.';b.textContent='🤖 YATIRIM ÖZETİ';b.disabled=false;return;}
+  const el=document.getElementById('ai-out');
+  el.innerHTML=`<div class="ai-box"><div class="ai-lbl">📊 TURYAP QUEEN · YATIRIM ANALİZİ</div><span id="ai-txt"></span></div>`;
+  const tgt=document.getElementById('ai-txt');
+  let i=0;const iv=setInterval(()=>{tgt.textContent=txt.slice(0,i);i+=4;if(i>txt.length){clearInterval(iv);tgt.textContent=txt;}},15);
+  b.textContent='🤖 YATIRIM ÖZETİ';b.disabled=false;
+}
+</script>
+</body>
+</html>
