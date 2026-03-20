@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Drone Parsel - Murat İyicioğlu</title>
+<script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+<link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#f0f2f5;height:100vh;overflow:hidden}
+#form{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:100;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%)}
+.box{background:#fff;padding:30px;border-radius:16px;width:90%;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+h2{margin:0 0 5px;color:#333;text-align:center}h3{margin:0 0 20px;color:#666;font-size:12px;text-align:center;font-weight:400}
+select,input{width:100%;padding:12px;margin:8px 0;border:1px solid #ddd;border-radius:8px;font-size:14px}
+button{width:100%;padding:14px;margin-top:10px;background:#667eea;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer}
+button:disabled{opacity:.5}button.secondary{background:#48bb78;margin-top:8px}
+#map{position:absolute;inset:0;background:#e0e0e0}
+#hud{position:absolute;top:10px;left:10px;background:rgba(255,255,255,.95);padding:15px;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,.1);font-size:13px;z-index:10}
+#hud div{margin:4px 0}label{color:#666;font-size:11px}value{display:block;font-weight:700;color:#333;font-size:16px}
+#pin{position:absolute;width:40px;height:40px;background:#e53e3e;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid #fff;box-shadow:0 4px 12px rgba(0,0,0,.3);z-index:20;display:none}
+#pin::after{content:'';position:absolute;width:12px;height:12px;background:#fff;border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%)}
+#pin-label{position:absolute;top:-30px;left:50%;transform:translateX(-50%);background:#fff;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;box-shadow:0 2px 8px rgba(0,0,0,.2);white-space:nowrap}
+svg#anim{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:15}
+path{fill:none;stroke:#e53e3e;stroke-width:4;stroke-linecap:round;filter:drop-shadow(0 0 4px rgba(229,62,62,.5));stroke-dasharray:2000;stroke-dashoffset:2000;animation:draw 2s ease-out forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+#panel{position:absolute;right:10px;top:10px;bottom:10px;width:250px;background:#fff;border-radius:12px;padding:20px;box-shadow:0 4px 20px rgba(0,0,0,.15);z-index:10;overflow-y:auto;transform:translateX(120%);transition:transform .3s}
+#panel.open{transform:translateX(0)}
+.row{display:flex;justify-content:space-between;margin:10px 0;padding-bottom:10px;border-bottom:1px solid #eee;font-size:14px}
+.right{font-weight:600;color:#2d3748}.green{color:#48bb78;font-size:18px}
+.ai-box{background:#faf5ff;border:1px solid #9f7aea;padding:12px;border-radius:8px;margin-top:15px}
+.ai-title{color:#6b46c1;font-weight:700;font-size:13px;margin-bottom:5px}
+#toggle{position:absolute;bottom:20px;right:20px;z-index:20;width:auto;padding:10px 20px;background:#fff;color:#333;box-shadow:0 4px 12px rgba(0,0,0,.2)}
+</style>
+</head>
+<body>
+
+<!-- FORM -->
+<div id="form">
+  <div class="box">
+    <h2>&#128752; Drone Parsel</h2>
+    <h3>Created by Murat İyicioğlu</h3>
+    
+    <select id="il"><option>Iller yukleniyor...</option></select>
+    <select id="ilce" disabled><option>Ilce secin</option></select>
+    <select id="mah" disabled><option>Mahalle secin</option></select>
+    <input type="number" id="ada" placeholder="Ada No" value="826">
+    <input type="number" id="parsel" placeholder="Parsel No" value="4">
+    
+    <button id="btn-start" disabled>Drone'u Baslat</button>
+    <button class="secondary" onclick="startDemo()">Demo Modu</button>
+    <div style="margin-top:15px;font-size:11px;color:#999;text-align:center">Worker: <span id="w-status">Kontrol ediliyor...</span></div>
+  </div>
+</div>
+
+<!-- HARITA -->
+<div id="map"></div>
+<svg id="anim"></svg>
+
+<!-- PIN -->
+<div id="pin"><div id="pin-label"></div></div>
+
+<!-- HUD -->
+<div id="hud" style="display:none">
+  <div><label>Yukseklik</label><value id="h-alt">120m</value></div>
+  <div><label>Mod</label><value id="h-mod">Hazir</value></div>
+  <div><label>Alan</label><value id="h-alan" style="color:#48bb78">-</value></div>
+</div>
+
+<!-- PANEL -->
+<div id="panel">
+  <div style="font-weight:700;margin-bottom:15px;color:#333">&#128208; Parsel Analizi</div>
+  <div class="row"><span>Il/Ilce</span><span class="right" id="p-ilce">-</span></div>
+  <div class="row"><span>Mahalle</span><span class="right" id="p-mah">-</span></div>
+  <div class="row"><span>Ada/Parsel</span><span class="right" id="p-ada">-</span></div>
+  <div class="row"><span>Alan</span><span class="right green" id="p-alan">-</span></div>
+  
+  <div style="font-weight:700;margin:20px 0 10px;color:#333">&#128176; Deger</div>
+  <div class="row"><span>Birim</span><span class="right" id="p-birim">-</span></div>
+  <div class="row"><span>Toplam</span><span class="right green" id="p-toplam">-</span></div>
+  
+  <div class="ai-box">
+    <div class="ai-title">&#129302; AI Skor: <span id="ai-skor">85</span></div>
+    <div style="font-size:12px;color:#4a5568" id="ai-text">Lokasyon analizi yapiliyor...</div>
+  </div>
+</div>
+
+<button id="toggle" onclick="document.getElementById('panel').classList.toggle('open')" style="display:none">&#9776;</button>
+
+<script>
+// AYAR
+const WORKER = 'https://tkgm-proxy.miyicioglu.workers.dev';
+let map, center, props={}, phase=0;
+
+// BASLANGIC
+fetch(WORKER+'/il').then(r=>r.json()).then(d=>{
+  document.getElementById('w-status').textContent='Aktif';
+  const s=document.getElementById('il');s.innerHTML='<option value="">Il secin</option>';
+  d.features.forEach(f=>s.add(new Option(f.properties.text,f.properties.id)));
+}).catch(()=>document.getElementById('w-status').textContent='Hata');
+
+document.getElementById('il').onchange=e=>load('ilce',e.target.value,document.getElementById('ilce'));
+document.getElementById('ilce').onchange=e=>load('mahalle',e.target.value,document.getElementById('mah'));
+document.getElementById('mah').onchange=()=>document.getElementById('btn-start').disabled=false;
+
+async function load(tip,id,sel){
+  sel.disabled=true;sel.innerHTML='<option>Yukleniyor...</option>';
+  const d=await(await fetch(`${WORKER}/${tip}/${id}`)).json();
+  sel.innerHTML='<option value="">Secin</option>';
+  d.features.forEach(f=>sel.add(new Option(f.properties.text,f.properties.id)));
+  sel.disabled=false;
+}
+
+// DEMO
+function startDemo(){
+  start({il:'Antalya',ilce:'Konyaalti',mah:'Arapsuyu',mahId:'1',ada:'826',parsel:'4'},
+        [30.655,36.875],
+        {alan:1250,nitelik:'Arsa'});
+}
+
+// BASLAT
+document.getElementById('btn-start').onclick=async()=>{
+  const m=document.getElementById('mah'),i=document.getElementById('il'),c=document.getElementById('ilce');
+  const fd={il:i.options[i.selectedIndex].text,ilce:c.options[c.selectedIndex].text,mah:m.options[m.selectedIndex].text,mahId:m.value,ada:document.getElementById('ada').value,parsel:document.getElementById('parsel').value};
+  
+  const d=await(await fetch(`${WORKER}/parsel/${fd.mahId}/${fd.ada}/${fd.parsel}`)).json();
+  if(!d.geometry){alert('Bulunamadi');return;}
+  
+  const coords=d.geometry.coordinates[0];
+  const lats=coords.map(c=>c[1]),lons=coords.map(c=>c[0]);
+  const cen=[(Math.min(...lons)+Math.max(...lons))/2,(Math.min(...lats)+Math.max(...lats))/2];
+  
+  start(fd,cen,d.properties||{});
+};
+
+function start(fd,cen,pr){
+  document.getElementById('form').style.display='none';
+  document.getElementById('hud').style.display='block';
+  document.getElementById('toggle').style.display='block';
+  document.getElementById('panel').classList.add('open');
+  center=cen;props=pr;
+  
+  // Harita
+  map=new maplibregl.Map({container:'map',center:center,zoom:15,style:{version:8,sources:{sat:{type:'raster',tiles:['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],tileSize:256},layers:[{id:'sat',type:'raster',source:'sat'}]}}});
+  
+  map.on('load',()=>{
+    // 1. SVG Animasyon
+    drawSVG();
+    // 2. Pin
+    setTimeout(dropPin,1500);
+    // 3. Katman
+    setTimeout(()=>{
+      document.getElementById('anim').innerHTML='';
+      map.addSource('p',{type:'geojson',data:{type:'Feature',geometry:{type:'Polygon',coordinates:[generateCoords()]},properties:{}}});
+      map.addLayer({id:'pf',type:'fill',source:'p',paint:{'fill-color':'#e53e3e','fill-opacity':0.2}});
+      map.addLayer({id:'pl',type:'line',source:'p',paint:{'line-color':'#e53e3e','line-width':3,'line-dasharray':[4,2]}});
+    },2000);
+    // 4. Drone
+    setTimeout(fly,2500);
+  });
+  
+  fillData(fd,pr);
+}
+
+function generateCoords(){
+  const d=0.001;
+  return [[center[0]-d,center[1]-d],[center[0]+d,center[1]-d],[center[0]+d,center[1]+d],[center[0]-d,center[1]+d],[center[0]-d,center[1]-d]];
+}
+
+function drawSVG(){
+  const coords=generateCoords();
+  const pts=coords.map(c=>{const p=map.project(c);return `${p.x},${p.y}`;}).join(' ');
+  document.getElementById('anim').innerHTML=`<path d="M${pts} Z" />`;
+}
+
+function dropPin(){
+  const p=map.project(center);
+  const pin=document.getElementById('pin');
+  pin.style.display='block';
+  pin.style.left=p.x+'px';
+  pin.style.top=p.y+'px';
+  document.getElementById('pin-label').textContent=`${props.ada||G?.ada||'826'}/${props.parsel||G?.parsel||'4'}`;
+  map.on('move',()=>{const np=map.project(center);pin.style.left=np.x+'px';pin.style.top=np.y+'px';});
+}
+
+function fly(){
+  const modes=[{z:16,p:45,t:'Yaklasim'},{z:17.5,p:60,t:'Orbit'},{z:19,p:35,t:'Detay'}];
+  function next(){
+    const m=modes[phase%3];
+    document.getElementById('h-mod').textContent=m.t;
+    map.flyTo({center:center,zoom:m.z,pitch:m.p,bearing:map.getBearing()+90,duration:6000});
+    setTimeout(next,6500);
+    phase++;
+  }
+  next();
+}
+
+function fillData(fd,pr){
+  const a=pr.alan||1000;
+  document.getElementById('p-ilce').textContent=fd.il+'/'+fd.ilce;
+  document.getElementById('p-mah').textContent=fd.mah;
+  document.getElementById('p-ada').textContent=fd.ada+'/'+fd.parsel;
+  document.getElementById('p-alan').textContent=a+' m2';
+  document.getElementById('h-alan').textContent=a+'m2';
+  
+  const birim=25000+Math.floor(Math.random()*20000);
+  const t=a*birim;
+  document.getElementById('p-birim').textContent='₺'+birim.toLocaleString();
+  document.getElementById('p-toplam').textContent='₺'+(t/1000000).toFixed(2)+'M';
+  
+  const skor=70+Math.floor(Math.random()*25);
+  document.getElementById('ai-skor').textContent=skor;
+  document.getElementById('ai-text').textContent=skor>80?'Guclu yatirim potansiyeli':'Degerlendirilebilir lokasyon';
+}
+</script>
+</body>
+</html>
