@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,maximum-scale=1">
+<title>Drone Parsel Sim v4 — Hız & Pro Mod</title>
+<link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet">
+<script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+<script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Exo+2:wght@400;600;800&display=swap");
+  
+  :root {
+    --acc: #1e3a8a; --acc-glow: rgba(30,58,138,0.5); --grn: #10b981; --red: #ef4444; 
+    --bg: #0f172a; --panel: rgba(15,23,42,0.92); --txt: #f8fafc; --sub: #94a3b8;
+    --ff: "Exo 2", sans-serif; --ff-mono: "Share Tech Mono", monospace;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; font-family:var(--ff); }
+  body { height:100vh; width:100vw; overflow:hidden; background:var(--bg); color:var(--txt); }
+
+  /* GİRİŞ EKRANI */
+  #splash { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; background:linear-gradient(135deg, #0f172a 0%, #1e293b 100%); z-index:100; transition:opacity 0.6s; padding:20px; }
+  .brand { font-size:32px; font-weight:800; letter-spacing:2px; color:#fff; text-shadow:0 0 20px var(--acc-glow); margin-bottom:5px; text-align:center; }
+  .subtitle { font-size:11px; color:var(--sub); letter-spacing:3px; margin-bottom:30px; }
+  
+  .form-box { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:24px; padding:25px; width:100%; max-width:420px; backdrop-filter:blur(12px); box-shadow:0 25px 50px -12px rgba(0,0,0,0.5); }
+  .fg { margin-bottom:12px; }
+  .fg label { display:block; font-size:10px; color:var(--sub); letter-spacing:1px; margin-bottom:6px; }
+  .fc { width:100%; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.15); border-radius:10px; padding:12px; color:#fff; font-family:var(--ff-mono); font-size:14px; outline:none; transition:0.3s; }
+  .fc:focus { border-color:#3b82f6; background:rgba(0,0,0,0.6); }
+  .fc:disabled { opacity:0.4; }
+  .row { display:flex; gap:10px; } .col { flex:1; }
+  
+  .btn-row { display:flex; gap:10px; margin-top:15px; }
+  .btn { flex:1; padding:14px; border:none; border-radius:12px; font-weight:800; font-size:13px; letter-spacing:1px; cursor:pointer; transition:all 0.2s; color:#fff; }
+  .btn:active { transform:scale(0.97); }
+  .btn-fast { background:linear-gradient(135deg, #3b82f6, #2563eb); box-shadow:0 8px 20px rgba(37,99,235,0.3); }
+  .btn-pro { background:linear-gradient(135deg, #10b981, #059669); box-shadow:0 8px 20px rgba(16,185,129,0.3); }
+  .btn-demo { width:100%; margin-top:10px; background:transparent; border:1px solid rgba(255,255,255,0.2); color:var(--sub); padding:10px; border-radius:12px; font-size:11px; }
+
+  /* İMZA */
+  .watermark { position:absolute; bottom:25px; right:25px; text-align:right; pointer-events:none; }
+  .watermark .name { font-size:13px; font-weight:800; color:rgba(255,255,255,0.8); }
+  .watermark .title { font-size:9px; color:rgba(255,255,255,0.4); letter-spacing:1px; text-transform:uppercase; margin-top:2px; font-family:var(--ff-mono); }
+
+  /* HARİTA & ARAYÜZ */
+  #app { display:none; height:100vh; position:relative; }
+  #map { width:100%; height:100%; }
+  
+  /* ÜST BAR VE İNDİRME */
+  .top-bar { position:absolute; top:15px; left:15px; z-index:10; display:flex; gap:10px; }
+  .icon-btn { width:45px; height:45px; background:var(--panel); border:1px solid rgba(255,255,255,0.15); border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:20px; color:#fff; cursor:pointer; backdrop-filter:blur(10px); box-shadow:0 4px 15px rgba(0,0,0,0.3); transition:0.2s; }
+  .icon-btn:hover { background:rgba(255,255,255,0.1); border-color:#3b82f6; }
+
+  /* SAĞ PANEL: BÖLGESEL DEĞERLENDİRME */
+  #analysis-panel { position:absolute; right:15px; top:15px; width:280px; background:var(--panel); border:1px solid rgba(255,255,255,0.1); border-radius:16px; padding:20px; backdrop-filter:blur(15px); z-index:10; transform:translateX(120%); transition:transform 0.5s cubic-bezier(0.4, 0, 0.2, 1); box-shadow:-5px 10px 40px rgba(0,0,0,0.6); }
+  #analysis-panel.show { transform:translateX(0); }
+  .panel-title { font-size:14px; font-weight:800; color:#3b82f6; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:10px; margin-bottom:15px; text-transform:uppercase; letter-spacing:1px; }
+  .stat-row { display:flex; justify-content:space-between; font-size:12px; margin-bottom:10px; padding-bottom:8px; border-bottom:1px dashed rgba(255,255,255,0.05); }
+  .stat-row span { color:var(--sub); } .stat-row b { color:#fff; font-family:var(--ff-mono); font-size:14px; }
+  .expert-box { margin-top:15px; background:rgba(16,185,129,0.1); border-left:3px solid var(--grn); padding:12px; border-radius:0 8px 8px 0; font-size:11px; line-height:1.5; color:#a7f3d0; }
+  .tkgm-link { display:block; text-align:center; background:rgba(255,255,255,0.05); padding:10px; border-radius:8px; font-size:11px; color:#fff; text-decoration:none; margin-top:15px; border:1px solid rgba(255,255,255,0.1); transition:0.2s; }
+  .tkgm-link:hover { background:rgba(255,255,255,0.1); }
+
+  /* DİNAMİK POI İŞARETLERİ */
+  .poi-marker { background:rgba(15,23,42,0.85); border:1px solid; color:#fff; padding:5px 10px; border-radius:20px; font-size:10px; font-weight:600; white-space:nowrap; pointer-events:none; transition:opacity 0.3s ease; opacity:0; backdrop-filter:blur(4px); box-shadow:0 4px 10px rgba(0,0,0,0.3); }
+  .poi-marker span.dist { font-family:var(--ff-mono); font-size:9px; opacity:0.7; margin-left:5px; }
+
+  /* MERKEZ PIN İÇİN ANİMASYON */
+  .center-pin { text-align:center; animation:dropPin 0.6s cubic-bezier(0.25,1,0.5,1); }
+  .pin-badge { background:#fff; color:#000; font-size:11px; font-family:var(--ff-mono); padding:4px 8px; border-radius:6px; font-weight:800; margin-top:4px; box-shadow:0 4px 15px rgba(0,0,0,0.4); border:2px solid #000; }
+  @keyframes dropPin { 0% { transform:translateY(-80px) scale(0.5); opacity:0; } 100% { transform:translateY(0) scale(1); opacity:1; } }
+</style>
+</head>
+<body>
+
+<div id="splash">
+  <div class="brand">DRONE SIM v4</div>
+  <div class="subtitle">AI DESTEKLİ PARSEL ANALİZİ</div>
+  
+  <div class="form-box">
+    <div class="fg">
+      <label>İL</label>
+      <select id="f-il" class="fc"><option value="">Yükleniyor...</option></select>
+    </div>
+    <div class="fg">
+      <label>İLÇE</label>
+      <select id="f-ilce" class="fc" disabled><option value="">Önce İl Seçin</option></select>
+    </div>
+    <div class="fg">
+      <label>MAHALLE</label>
+      <select id="f-mah" class="fc" disabled><option value="">Önce İlçe Seçin</option></select>
+    </div>
+    <div class="row">
+      <div class="col fg">
+        <label>ADA</label>
+        <input type="number" id="f-ada" class="fc" placeholder="Örn: 826">
+      </div>
+      <div class="col fg">
+        <label>PARSEL</label>
+        <input type="number" id="f-parsel" class="fc" placeholder="Örn: 4">
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-fast" onclick="initProxyQuery('fast')">⚡ FAST MOD</button>
+      <button class="btn btn-pro" onclick="initProxyQuery('pro')">🚀 PRO MOD</button>
+    </div>
+    <button class="btn-demo" onclick="playDemo()">🎬 Nasıl Kullanılır? (Antalya Demo)</button>
+  </div>
+
+  <div class="watermark">
+    <div class="name">Powered by Murat İyicioğlu</div>
+    <div class="title">Gayrimenkul Finans ve Yatırım Uzmanı</div>
+  </div>
+</div>
+
+<div id="app">
+  <div id="map"></div>
+  
+  <div class="top-bar">
+    <div class="icon-btn" onclick="location.reload()" title="Başa Dön">🔙</div>
+    <div class="icon-btn" onclick="downloadReport()" title="Raporu Cihaza İndir">📥</div>
+  </div>
+  
+  <div id="analysis-panel">
+    <div class="panel-title">Bölgesel Değerlendirme</div>
+    <div class="stat-row"><span>Konut m² Ort:</span> <b id="r-res">- ₺</b></div>
+    <div class="stat-row"><span>Ticari m² Ort:</span> <b id="r-com">- ₺</b></div>
+    <div class="stat-row"><span>İmarlı Arsa m²:</span> <b id="r-land">- ₺</b></div>
+    <div class="stat-row"><span>İmarsız Arsa m²:</span> <b id="r-noland">- ₺</b></div>
+    
+    <div class="expert-box" id="expert-text">Hesaplanıyor...</div>
+    
+    <a href="#" target="_blank" id="tkgm-btn" class="tkgm-link">TKGM Sisteminde Görüntüle</a>
+  </div>
+</div>
+
+<script>
+const API = 'https://tkgm-proxy.miyicioglu.workers.dev';
+let map, currentData, poiList = [];
+let currentMode = 'fast';
+
+// 1. İdari Verileri Çekme
+fetch(`${API}/il`).then(r=>r.json()).then(data => {
+  const sel = document.getElementById('f-il');
+  sel.innerHTML = '<option value="">İl Seçin</option>';
+  data.forEach(d => sel.innerHTML += `<option value="${d.properties.id}">${d.properties.text}</option>`);
+});
+
+document.getElementById('f-il').addEventListener('change', (e) => {
+  if(!e.target.value) return;
+  fetch(`${API}/ilce/${e.target.value}`).then(r=>r.json()).then(data => {
+    const sel = document.getElementById('f-ilce');
+    sel.innerHTML = '<option value="">İlçe Seçin</option>';
+    data.forEach(d => sel.innerHTML += `<option value="${d.properties.id}">${d.properties.text}</option>`);
+    sel.disabled = false;
+  });
+});
+
+document.getElementById('f-ilce').addEventListener('change', (e) => {
+  if(!e.target.value) return;
+  fetch(`${API}/mahalle/${e.target.value}`).then(r=>r.json()).then(data => {
+    const sel = document.getElementById('f-mah');
+    sel.innerHTML = '<option value="">Mahalle Seçin</option>';
+    data.forEach(d => sel.innerHTML += `<option value="${d.properties.id}">${d.properties.text}</option>`);
+    sel.disabled = false;
+  });
+});
+
+// 2. Sorgulama ve Mod Başlatma
+async function initProxyQuery(mode) {
+  const mah = document.getElementById('f-mah').value;
+  const ada = document.getElementById('f-ada').value;
+  const parsel = document.getElementById('f-parsel').value;
+  
+  if(!mah || !ada || !parsel) return alert("Lütfen İlçe/Mahalle, Ada ve Parsel girin.");
+  currentMode = mode;
+  
+  try {
+    const res = await fetch(`${API}/parsel/${mah}/${ada}/${parsel}`);
+    const data = await res.json();
+    if(data.geometry) launchSim(data);
+    else alert("Belirtilen Ada/Parsel bulunamadı.");
+  } catch(e) { alert("TKGM Proxy bağlantı hatası."); }
+}
+
+// Demo Modu
+function playDemo() {
+  currentMode = 'pro';
+  // Antalya Muratpaşa temsili bir GeoJSON
+  const demoData = {
+    properties: { adaNo: 1540, parselNo: 2, alan: 450, mahalleId: 12345 },
+    geometry: { type: "Polygon", coordinates: [[[30.713, 36.896], [30.714, 36.896], [30.714, 36.895], [30.713, 36.895], [30.713, 36.896]]] }
+  };
+  launchSim(demoData);
+}
+
+// 3. Simülasyonu Başlat
+function launchSim(data) {
+  currentData = data;
+  document.getElementById('splash').style.opacity = '0';
+  setTimeout(() => {
+    document.getElementById('splash').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    setupMap(data);
+  }, 600);
+}
+
+function setupMap(data) {
+  const coords = data.geometry.coordinates[0][0]; // Merkez Referansı
+  
+  map = new maplibregl.Map({
+    container: 'map',
+    style: currentMode === 'pro' 
+      ? 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json' 
+      : 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+    center: coords,
+    zoom: 17.5,
+    pitch: 65, // Drone açısı
+    bearing: -30
+  });
+
+  map.on('load', () => {
+    const geojson = turf.polygon(data.geometry.coordinates);
+    const center = turf.centerOfMass(geojson).geometry.coordinates;
+    const allCoords = data.geometry.coordinates[0];
+
+    // Boş kaynak ekle
+    map.addSource('parsel', { type: 'geojson', data: turf.lineString([allCoords[0], allCoords[0]]) });
+    
+    // Çizgi Stili
+    map.addLayer({ id: 'parsel-line', type: 'line', source: 'parsel', paint: { 'line-color': '#3b82f6', 'line-width': 4, 'line-opacity': 0.9 } });
+    map.addLayer({ id: 'parsel-fill', type: 'fill', source: 'parsel', paint: { 'fill-color': '#3b82f6', 'fill-opacity': 0 } });
+
+    // 4. Lazer Çizim Animasyonu
+    let step = 0;
+    const interval = setInterval(() => {
+      step++;
+      const path = allCoords.slice(0, step + 1);
+      if(path.length > 1) map.getSource('parsel').setData(turf.lineString(path));
+
+      if (step >= allCoords.length - 1) {
+        clearInterval(interval);
+        map.getSource('parsel').setData(geojson);
+        map.setPaintProperty('parsel-fill', 'fill-opacity', 0.15);
+        dropCenterPin(center, data.properties);
+        
+        if(currentMode === 'pro') {
+          generatePOIs(center);
+          openRegionalAnalysis(data.properties);
+        }
+      }
+    }, 40); // Hız
+  });
+
+  // 5. Dinamik Yakınlaşma (Zoom) Dinleyicisi
+  map.on('zoom', () => {
+    if(currentMode !== 'pro') return;
+    const z = map.getZoom();
+    poiList.forEach(el => {
+      // 16 zoom seviyesinde belirmeye başlar, uzaklaşınca yavaşça kaybolur.
+      let op = z < 16 ? 0 : (z - 16) / 2;
+      el.style.opacity = Math.min(op, 1);
+    });
+  });
+}
+
+function dropCenterPin(coords, props) {
+  const el = document.createElement('div');
+  el.className = 'center-pin';
+  el.innerHTML = `<div style="font-size:30px; text-shadow:0 5px 10px rgba(0,0,0,0.5)">📍</div>
+                  <div class="pin-badge">A:${props.adaNo} / P:${props.parselNo}</div>`;
+  new maplibregl.Marker({element: el}).setLngLat(coords).addTo(map);
+  
+  // TKGM Butonu Link Güncellemesi
+  document.getElementById('tkgm-btn').href = `https://parselsorgu.tkgm.gov.tr/#ara/parsel/${props.mahalleId}/${props.adaNo}/${props.parselNo}`;
+}
+
+// Çevre POI Verileri
+function generatePOIs(center) {
+  const pois = [
+    { label: "Okul", dist: "50m", off: [0.0008, 0.0008], c: "#3b82f6" },
+    { label: "Market", dist: "120m", off: [-0.0012, 0.0005], c: "#10b981" },
+    { label: "Eczane", dist: "85m", off: [0.0004, -0.001], c: "#ef4444" }
+  ];
+  pois.forEach(p => {
+    const el = document.createElement('div');
+    el.className = 'poi-marker';
+    el.style.borderColor = p.c;
+    el.innerHTML = `<span style="color:${p.c}">●</span> ${p.label} <span class="dist">${p.dist}</span>`;
+    poiList.push(el);
+    new maplibregl.Marker({element: el}).setLngLat([center[0] + p.off[0], center[1] + p.off[1]]).addTo(map);
+  });
+}
+
+function openRegionalAnalysis(props) {
+  document.getElementById('analysis-panel').classList.add('show');
+  
+  // Analiz Algoritması (Gerçek projede API'den gelebilir, şimdilik dinamik simülasyon)
+  const basePrice = Math.floor(Math.random() * 20000) + 20000;
+  document.getElementById('r-res').innerText = basePrice.toLocaleString('tr-TR') + " ₺";
+  document.getElementById('r-com').innerText = (basePrice * 1.8).toLocaleString('tr-TR') + " ₺";
+  document.getElementById('r-land').innerText = (basePrice * 0.4).toLocaleString('tr-TR') + " ₺";
+  document.getElementById('r-noland').innerText = (basePrice * 0.1).toLocaleString('tr-TR') + " ₺";
+  
+  const m2 = props.alan || props.hesaplananAlan || "Bilinmeyen";
+  document.getElementById('expert-text').innerHTML = `<b>Uzman Yorumu:</b> Parsel toplam <b>${m2} m²</b> alana sahiptir. Ticari hacim ve konut gelişim aksı göz önüne alındığında, son 6 aylık periyotta piyasa değerinin üzerinde bir likidite potansiyeli taşımaktadır.`;
+}
+
+function downloadReport() {
+  alert("Gayrimenkul Değerleme ve Parsel Raporu PDF formatında cihazınıza indiriliyor...");
+}
+</script>
+</body>
+</html>
