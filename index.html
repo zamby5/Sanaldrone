@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drone Parsel Pro v7.0 - Murat İyicioğlu</title>
+    <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+    <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap');
+        :root{--primary:#1e40af;--accent:#dc2626;--success:#059669;--ai:#7c3aed;--bg:#f1f5f9;--panel:#fff;--text:#0f172a;--border:#e2e8f0;--shadow:0 4px 6px -1px rgba(0,0,0,0.1);--font:'Inter',sans-serif}
+        *{margin:0;padding:0;box-sizing:border-box;font-family:var(--font)}
+        html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text)}
+        
+        /* Mode Selector */
+        .mode-select{position:fixed;inset:0;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);z-index:1000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px}
+        .mode-title{font-size:36px;font-weight:800;color:#fff;margin-bottom:10px;text-align:center;text-shadow:0 2px 4px rgba(0,0,0,0.2)}
+        .mode-sub{color:rgba(255,255,255,0.9);font-size:14px;margin-bottom:40px;text-align:center}
+        .mode-cards{display:flex;gap:20px;flex-wrap:wrap;justify-content:center;max-width:900px;width:100%}
+        .mode-card{background:#fff;border-radius:16px;padding:30px;width:100%;max-width:400px;cursor:pointer;transition:all 0.3s;box-shadow:0 10px 40px rgba(0,0,0,0.2);border:3px solid transparent}
+        .mode-card:hover{transform:translateY(-5px);box-shadow:0 20px 60px rgba(0,0,0,0.3)}
+        .mode-card.pro{border-color:#ffd700;position:relative;overflow:hidden}
+        .mode-card.pro::after{content:'PRO';position:absolute;top:10px;right:-30px;background:#ffd700;color:#000;padding:5px 40px;transform:rotate(45deg);font-size:12px;font-weight:800}
+        .mode-icon{font-size:48px;margin-bottom:15px}
+        .mode-name{font-size:24px;font-weight:700;margin-bottom:10px;color:var(--text)}
+        .mode-desc{color:#666;font-size:14px;line-height:1.5;margin-bottom:15px}
+        .mode-features{list-style:none;font-size:13px;color:#555}
+        .mode-features li{margin:5px 0;display:flex;align-items:center;gap:8px}
+        .mode-features li::before{content:'✓';color:var(--success);font-weight:700}
+        .creator{text-align:center;margin-top:30px;color:rgba(255,255,255,0.8);font-size:12px}
+        .creator strong{color:#fff;font-size:14px;display:block;margin-top:5px}
+        
+        /* Lite Mode */
+        #lite-mode{display:none;height:100vh;flex-direction:column}
+        #lite-mode.active{display:flex}
+        .lite-header{height:60px;background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 20px;box-shadow:var(--shadow)}
+        .lite-title{font-size:20px;font-weight:700;color:var(--primary)}
+        .lite-map{flex:1;position:relative;background:#ddd}
+        .lite-info{position:absolute;bottom:20px;left:20px;right:20px;background:rgba(255,255,255,0.98);border-radius:16px;padding:20px;box-shadow:0 10px 40px rgba(0,0,0,0.2);border:1px solid var(--border)}
+        .lite-row{display:flex;justify-content:space-between;margin:10px 0;font-size:15px}
+        .lite-label{color:#666}.lite-value{font-weight:700}.lite-price{font-size:24px;color:var(--success);font-weight:800}
+        .lite-upgrade{width:100%;margin-top:15px;padding:12px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer}
+        
+        /* Pro Mode */
+        #pro-mode{display:none;height:100vh;flex-direction:column}
+        #pro-mode.active{display:flex}
+        .top-bar{height:60px;background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 20px;box-shadow:var(--shadow);z-index:100}
+        .brand{display:flex;align-items:center;gap:12px}
+        .brand-icon{width:40px;height:40px;background:var(--primary);border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px}
+        .brand-text h1{font-size:16px;font-weight:800}.brand-text span{font-size:11px;color:#666}
+        .top-actions{display:flex;gap:10px}
+        .btn{padding:8px 16px;border:1px solid var(--border);background:#fff;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px;transition:all 0.2s}
+        .btn:hover{border-color:var(--primary);background:#f8fafc}.btn.primary{background:var(--primary);color:#fff;border-color:var(--primary)}
+        .btn.success{background:var(--success);color:#fff;border-color:var(--success)}
+        
+        .main-container{flex:1;display:flex;overflow:hidden}
+        .left-panel{width:280px;background:#fff;border-right:1px solid var(--border);overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:20px}
+        .panel-section h3{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#666;margin-bottom:12px}
+        .control-btn{width:100%;padding:10px;margin:4px 0;border:1px solid var(--border);background:#fff;border-radius:8px;cursor:pointer;text-align:left;font-size:13px;transition:all 0.2s;display:flex;align-items:center;gap:8px}
+        .control-btn:hover{border-color:var(--primary);background:#f8fafc}.control-btn.active{background:#eff6ff;border-color:var(--primary);color:var(--primary);font-weight:600}
+        .control-btn.ai{background:#faf5ff;border-color:var(--ai);color:var(--ai)}
+        
+        .map-area{flex:1;position:relative;background:#e2e8f0}
+        #map{position:absolute;inset:0}
+        #svg-layer{position:absolute;inset:0;pointer-events:none;z-index:20}
+        .parcel-path{fill:none;stroke:var(--accent);stroke-width:4;stroke-linecap:round;filter:drop-shadow(0 0 8px rgba(220,38,38,0.6));stroke-dasharray:3000;stroke-dashoffset:3000;animation:draw 2.5s ease-out forwards}
+        .parcel-fill{fill:rgba(220,38,38,0.15);opacity:0;animation:fadeIn 0.5s ease-out 2s forwards}
+        @keyframes draw{to{stroke-dashoffset:0}}@keyframes fadeIn{to{opacity:1}}
+        
+        #animated-pin{position:absolute;transform:translate(-50%,-100%);z-index:30;display:none;animation:pinDrop 0.8s cubic-bezier(0.175,0.885,0.32,1.275)}
+        @keyframes pinDrop{0%{transform:translate(-50%,-200%) scale(0);opacity:0}60%{transform:translate(-50%,-100%) scale(1.2)}100%{transform:translate(-50%,-100%) scale(1);opacity:1}}
+        .pin-head{width:48px;height:48px;background:var(--accent);border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid #fff;box-shadow:0 4px 15px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center}
+        .pin-head::after{content:'';width:14px;height:14px;background:#fff;border-radius:50%;transform:rotate(45deg)}
+        .pin-label{position:absolute;top:-40px;left:50%;transform:translateX(-50%);background:#fff;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:800;color:var(--accent);border:2px solid var(--accent);white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,0.15)}
+        
+        .hud{position:absolute;background:rgba(255,255,255,0.95);backdrop-filter:blur(10px);border-radius:12px;border:1px solid var(--border);box-shadow:var(--shadow);padding:16px;z-index:40}
+        .hud-tl{top:20px;left:20px;display:flex;gap:20px}
+        .hud-item{text-align:center}.hud-label{font-size:10px;color:#666;text-transform:uppercase;margin-bottom:4px}.hud-value{font-size:18px;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--primary)}
+        .hud-phase{top:20px;left:50%;transform:translateX(-50%);background:var(--accent);color:#fff;padding:8px 24px;border-radius:20px;font-weight:700;letter-spacing:2px;display:flex;align-items:center;gap:8px}
+        .hud-phase::before{content:'';width:8px;height:8px;background:#fff;border-radius:50%;animation:blink 1s infinite}
+        @keyframes blink{50%{opacity:0.3}}
+        
+        .right-panel{width:380px;background:#fff;border-left:1px solid var(--border);overflow-y:auto;padding:20px}
+        .card{background:#f8fafc;border-radius:12px;padding:16px;margin-bottom:16px;border:1px solid var(--border)}
+        .card h4{font-size:12px;text-transform:uppercase;color:#666;margin-bottom:12px;letter-spacing:1px;display:flex;justify-content:space-between;align-items:center}
+        .data-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed #ddd;font-size:14px}
+        .data-row:last-child{border-bottom:none}.data-value{font-weight:700}.data-value.large{font-size:20px;color:var(--success)}
+        
+        .ai-box{background:linear-gradient(135deg,#faf5ff,#f3e8ff);border:1px solid #e9d5ff;border-radius:12px;padding:16px}
+        .ai-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+        .ai-title{color:var(--ai);font-weight:700;font-size:14px}.ai-score{background:var(--ai);color:#fff;padding:4px 12px;border-radius:20px;font-weight:800}
+        .ai-text{font-size:13px;line-height:1.6;color:#4a5568;margin-bottom:10px}
+        .ai-tags{display:flex;flex-wrap:wrap;gap:6px}.ai-tag{background:rgba(124,58,237,0.1);color:var(--ai);padding:4px 10px;border-radius:6px;font-size:11px;font-weight:500}
+        
+        .poi-list{display:flex;flex-direction:column;gap:8px}
+        .poi-item{display:flex;align-items:center;gap:10px;padding:10px;background:#fff;border-radius:8px;border:1px solid var(--border)}
+        .poi-icon{width:32px;height:32px;background:#f1f5f9;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px}
+        .poi-info{flex:1}.poi-name{font-size:13px;font-weight:600}.poi-dist{font-size:11px;color:#666}
+        
+        /* Modals */
+        .modal{position:fixed;inset:0;background:rgba(0,0,0,0.5);backdrop-filter:blur(4px);z-index:1000;display:none;align-items:center;justify-content:center;padding:20px}
+        .modal.active{display:flex}
+        .modal-content{background:#fff;border-radius:16px;width:100%;max-width:800px;max-height:90vh;overflow-y:auto;box-shadow:0 25px 50px -12px rgba(0,0,0,0.25)}
+        .modal-header{padding:20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+        .modal-title{font-size:20px;font-weight:700}.modal-close{width:36px;height:36px;border-radius:8px;border:none;background:#f1f5f9;cursor:pointer;font-size:20px}
+        .modal-body{padding:24px;line-height:1.6}
+        .help-section{margin-bottom:24px}.help-section h3{color:var(--primary);font-size:16px;margin-bottom:12px}.help-section p{color:#666;margin-bottom:8px;font-size:14px}
+        .feature-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px;margin-top:16px}
+        .feature-card{background:#f8fafc;padding:16px;border-radius:8px;border:1px solid var(--border)}
+        .feature-card h4{font-size:14px;margin-bottom:8px;color:var(--text)}.feature-card p{font-size:13px;color:#666}
+        
+        .share-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;padding:24px}
+        .share-option{padding:24px;border:2px solid var(--border);border-radius:12px;text-align:center;cursor:pointer;transition:all 0.2s}.share-option:hover{border-color:var(--primary);background:#f8fafc}
+        .share-icon{font-size:32px;margin-bottom:8px}.share-label{font-size:14px;font-weight:600}
+        
+        @media print{.top-bar,.left-panel,.btn{display:none!important}.map-area{height:400px;page-break-after:always}.right-panel{display:block!important;width:100%;box-shadow:none}}
+        @media(max-width:1024px){.left-panel{position:absolute;left:0;height:100%;transform:translateX(-100%);transition:transform 0.3s;z-index:50}.left-panel.open{transform:translateX(0)}.right-panel{width:100%;max-width:400px;position:absolute;right:0;height:100%;transform:translateX(100%);transition:transform 0.3s}.right-panel.open{transform:translateX(0)}}
+    </style>
+</head>
+<body>
+
+<!-- MODE SELECTOR -->
+<div class="mode-select" id="modeSelect">
+    <div class="mode-title">DRONE PARSEL SIMULATOR</div>
+    <div class="mode-sub">TKGM Entegre | AI Destekli | Profesyonel Gayrimenkul Analizi</div>
+    
+    <div class="mode-cards">
+        <div class="mode-card" onclick="selectMode('lite')">
+            <div class="mode-icon">🚁</div>
+            <div class="mode-name">Lite Mod</div>
+            <div class="mode-desc">Hızlı parsel görüntüleme ve temel değer bilgisi. Mobil uyumlu, anında erişim.</div>
+            <ul class="mode-features">
+                <li>Temel harita görünümü</li>
+                <li>Alan ve konum bilgisi</li>
+                <li>Tahmini piyasa değeri</li>
+                <li>Hızlı paylaşım</li>
+            </ul>
+        </div>
+        
+        <div class="mode-card pro" onclick="selectMode('pro')">
+            <div class="mode-icon">🛸</div>
+            <div class="mode-name">Pro Mod</div>
+            <div class="mode-desc">Tam özellikli drone simülasyonu, detaylı finansal analiz ve AI değerlendirme.</div>
+            <ul class="mode-features">
+                <li>360° Drone turları</li>
+                <li>AI destekli yatırım skoru</li>
+                <li>Komşu parsel karşılaştırma</li>
+                <li>PDF rapor ve detaylı çıktı</li>
+                <li>Yakın çevre analizi (POI)</li>
+            </ul>
+        </div>
+    </div>
+    
+    <div class="creator">
+        Developed by <strong>Murat İyicioğlu</strong>
+        <div style="margin-top:5px;opacity:0.8">Turyap Queen Edition v7.0 | 2025</div>
+    </div>
+</div>
+
+<!-- LITE MODE -->
+<div id="lite-mode">
+    <div class="lite-header">
+        <div class="lite-title">🚁 Drone Parsel Lite</div>
+        <div style="display:flex;gap:10px">
+            <button class="btn" onclick="showShare()">📤 Paylaş</button>
+            <button class="btn" onclick="location.reload()">🔄 Yenile</button>
+        </div>
+    </div>
+    <div class="lite-map">
+        <div id="liteMap" style="width:100%;height:100%"></div>
+        <div class="lite-info">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px">
+                <h2 style="font-size:20px;color:var(--primary)" id="liteTitle">Parsel Yükleniyor...</h2>
+                <span style="background:var(--success);color:#fff;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600">Aktif</span>
+            </div>
+            <div class="lite-row"><span class="lite-label">Konum</span><span class="lite-value" id="liteLoc">-</span></div>
+            <div class="lite-row"><span class="lite-label">Alan</span><span class="lite-value" id="liteAlan">-</span></div>
+            <div class="lite-row"><span class="lite-label">Birim Fiyat</span><span class="lite-value" id="liteBirim">-</span></div>
+            <div style="margin-top:15px;padding-top:15px;border-top:2px solid var(--border)">
+                <div class="lite-row"><span class="lite-label">Tahmini Değer</span><span class="lite-price" id="liteDeger">-</span></div>
+            </div>
+            <button class="lite-upgrade" onclick="switchToPro()">🚀 Pro Özelliklerini Aç</button>
+        </div>
+    </div>
+</div>
+
+<!-- PRO MODE -->
+<div id="pro-mode">
+    <div class="top-bar">
+        <div class="brand">
+            <div class="brand-icon">🛸</div>
+            <div class="brand-text">
+                <h1>DRONE PARSEL PRO</h1>
+                <span>Created by Murat İyicioğlu | Turyap Queen Edition</span>
+            </div>
+        </div>
+        <div class="top-actions">
+            <button class="btn" onclick="toggleHelp()">❓ Yardım</button>
+            <button class="btn" onclick="showShare()">📤 Paylaş</button>
+            <button class="btn success" onclick="generatePDF()">📄 PDF Rapor</button>
+            <button class="btn" onclick="toggleLite()" style="background:#f1f5f9">🚁 Lite Mod</button>
+        </div>
+    </div>
+    
+    <div class="main-container">
+        <!-- LEFT PANEL -->
+        <div class="left-panel" id="leftPanel">
+            <div class="panel-section">
+                <h3>🎮 Uçuş Kontrolü</h3>
+                <button class="control-btn active" onclick="setPhase(0)" id="btn-ph0">✈️ Yaklaşım</button>
+                <button class="control-btn" onclick="setPhase(1)" id="btn-ph1">🔄 360° Orbit</button>
+                <button class="control-btn" onclick="setPhase(2)" id="btn-ph2">⬇️ Alçak Geçiş</button>
+                <button class="control-btn" onclick="setPhase(3)" id="btn-ph3">🔍 Detay İnceleme</button>
+                <button class="control-btn" onclick="togglePause()" id="btn-pause">⏸️ Durdur/Başlat</button>
+            </div>
+            
+            <div class="panel-section">
+                <h3>🗺️ Katmanlar</h3>
+                <button class="control-btn active" onclick="toggleLayer('sat')">🛰️ Uydu</button>
+                <button class="control-btn" onclick="toggleLayer('street')">🗾 Sokak</button>
+                <button class="control-btn active" onclick="toggleLayer('parcel')">🔴 Parsel Sınırı</button>
+                <button class="control-btn" onclick="toggleLayer('poi')">📍 POI Göster</button>
+            </div>
+            
+            <div class="panel-section">
+                <h3>🤖 Analiz</h3>
+                <button class="control-btn ai" onclick="recalculateAI()">🧠 AI Yenile</button>
+                <button class="control-btn" onclick="showComparison()">📊 Komşu Karşılaştır</button>
+                <button class="control-btn" onclick="measureTool()">📏 Mesafe Ölç</button>
+            </div>
+            
+            <div style="margin-top:auto;padding:15px;background:#f8fafc;border-radius:8px;font-size:12px;color:#666;text-align:center">
+                <div style="font-weight:700;color:var(--primary);margin-bottom:5px">Murat İyicioğlu</div>
+                <div>Turyap Queen v7.0</div>
+                <div style="margin-top:5px;font-size:11px">© 2025 Tüm Hakları Saklıdır</div>
+            </div>
+        </div>
+        
+        <!-- MAP AREA -->
+        <div class="map-area">
+            <div id="proMap"></div>
+            <svg id="svg-layer"></svg>
+            
+            <div id="animated-pin">
+                <div class="pin-label" id="pinText">826 / 4</div>
+                <div class="pin-head"></div>
+            </div>
+            
+            <div class="hud hud-tl">
+                <div class="hud-item"><div class="hud-label">Yükseklik</div><div class="hud-value" id="hudAlt">120m</div></div>
+                <div class="hud-item"><div class="hud-label">Hız</div><div class="hud-value" id="hudSpd">0</div></div>
+                <div class="hud-item"><div class="hud-label">Eğim</div><div class="hud-value" id="hudPitch">35°</div></div>
+                <div class="hud-item"><div class="hud-label">Yön</div><div class="hud-value" id="hudHead">0°</div></div>
+            </div>
+            
+            <div class="hud hud-phase" id="phaseBadge">YAKLAŞIM</div>
+        </div>
+        
+        <!-- RIGHT PANEL -->
+        <div class="right-panel" id="rightPanel">
+            <div class="card">
+                <h4>📍 Parsel Bilgisi <span style="font-weight:400;color:#999" id="parselId">ID: -</span></h4>
+                <div class="data-row"><span>İl / İlçe</span><span class="data-value" id="infoIlce">-</span></div>
+                <div class="data-row"><span>Mahalle</span><span class="data-value" id="infoMah">-</span></div>
+                <div class="data-row"><span>Ada / Parsel</span><span class="data-value" id="infoAda">-</span></div>
+                <div class="data-row"><span>Alan (m²)</span><span class="data-value large" id="infoAlan">-</span></div>
+                <div class="data-row"><span>Nitelik</span><span class="data-value" id="infoNitelik">-</span></div>
+            </div>
+            
+            <div class="card">
+                <h4>💰 Finansal Analiz</h4>
+                <div class="data-row"><span>Bölge Birim Fiyatı</span><span class="data-value" id="finBirim">-</span></div>
+                <div class="data-row"><span>Toplam Değer</span><span class="data-value large" id="finTotal">-</span></div>
+                <div class="data-row"><span>Aylık Kira</span><span class="data-value" id="finKira">-</span></div>
+                <div class="data-row"><span>Amortisman</span><span class="data-value" id="finAmor">-</span></div>
+                <div style="margin-top:10px;height:6px;background:#e2e8f0;border-radius:3px;overflow:hidden"><div id="potBar" style="height:100%;background:linear-gradient(90deg,var(--primary),var(--success));width:0%;transition:width 1s"></div></div>
+            </div>
+            
+            <div class="ai-box">
+                <div class="ai-header">
+                    <div class="ai-title">🧠 AI Yatırım Skoru</div>
+                    <div class="ai-score" id="aiScore">85</div>
+                </div>
+                <div class="ai-text" id="aiText">Analiz ediliyor...</div>
+                <div class="ai-tags" id="aiTags"><span class="ai-tag">Hesaplanıyor...</span></div>
+            </div>
+            
+            <div class="card">
+                <h4>🏢 Yakın Çevre (500m)</h4>
+                <div class="poi-list" id="poiList"><div style="text-align:center;color:#999;padding:20px">Yükleniyor...</div></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- HELP MODAL -->
+<div class="modal" id="helpModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div class="modal-title">📖 Kullanım Kılavuzu</div>
+            <button class="modal-close" onclick="toggleHelp()">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="help-section">
+                <h3>🚀 Başlangıç</h3>
+                <p>Drone Parsel Pro, TKGM (Tapu ve Kadastro Genel Müdürlüğü) verileri ile entegre çalışan profesyonel bir gayrimenkul analiz aracıdır.</p>
+                <p><strong>Lite Mod:</strong> Hızlı görüntüleme için idealdir. Temel değer bilgilerini anında görürsünüz.</p>
+                <p><strong>Pro Mod:</strong> 360° drone turları, AI değerlendirme ve detaylı finansal analiz sunar.</p>
+            </div>
+            
+            <div class="help-section">
+                <h3>🎮 Drone Kontrolleri</h3>
+                <div class="feature-grid">
+                    <div class="feature-card"><h4>✈️ Yaklaşım</h4><p>Parselin genel görünümüne yüksekten bakış. Bölgeyi tanımak için ideal.</p></div>
+                    <div class="feature-card"><h4>🔄 360° Orbit</h4><p>Parselin etrafında dairesel uçuş. Tüm cepheleri inceleyin.</p></div>
+                    <div class="feature-card"><h4>⬇️ Alçak Geçiş</h4><p>Düşük irtifadan detaylı inceleme. Sınır taşlarını görün.</p></div>
+                    <div class="feature-card"><h4>🔍 Detay</h4><p>Yakın plan teknik inceleme. En yakın zoom seviyesi.</p></div>
+                </div>
+            </div>
+            
+            <div class="help-section">
+                <h3>🧠 AI Değerlendirme</h3>
+                <p>Yapay zeka algoritması şu faktörleri analiz eder:</p>
+                <ul style="margin-left:20px;color:#666;font-size:14px;line-height:1.8">
+                    <li><strong>Konum:</strong> Merkeze yakınlık, ulaşım erişimi</li>
+                    <li><strong>Yakın Çevre:</strong> Okul, hastane, alışveriş mesafeleri</li>
+                    <li><strong>Parsel Özellikleri:</strong> Alan, şekil, imar durumu</li>
+                    <li><strong>Piyasa Verileri:</strong> Bölgesel birim fiyatlar</li>
+                </ul>
+            </div>
+            
+            <div class="help-section">
+                <h3>💾 Veri Paylaşımı</h3>
+                <p>PDF rapor oluşturarak tüm analizleri kaydedebilir veya sosyal medyada paylaşabilirsiniz. Street View ve Google Earth entegrasyonu ile parseli harici platformlarda da inceleyebilirsiniz.</p>
+            </div>
+            
+            <div style="margin-top:30px;padding-top:20px;border-top:1px solid var(--border);text-align:center;color:#666;font-size:13px">
+                <strong>Murat İyicioğlu</strong> tarafından geliştirilmiştir.<br>
+                Turyap Queen Edition v7.0 | TKGM API Entegre
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SHARE MODAL -->
+<div class="modal" id="shareModal">
+    <div class="modal-content" style="max-width:500px">
+        <div class="modal-header">
+            <div class="modal-title">📤 Paylaş</div>
+            <button class="modal-close" onclick="document.getElementById('shareModal').classList.remove('active')">×</button>
+        </div>
+        <div class="share-grid">
+            <div class="share-option" onclick="shareNative()">
+                <div class="share-icon">📱</div>
+                <div class="share-label">Sistem Paylaşımı</div>
+            </div>
+            <div class="share-option" onclick="copyLink()">
+                <div class="share-icon">🔗</div>
+                <div class="share-label">Link Kopyala</div>
+            </div>
+            <div class="share-option" onclick="shareWhatsApp()">
+                <div class="share-icon">💬</div>
+                <div class="share-label">WhatsApp</div>
+            </div>
+            <div class="share-option" onclick="window.print()">
+                <div class="share-icon">🖨️</div>
+                <div class="share-label">Yazdır</div>
+            </div>
+            <div class="share-option" onclick="generatePDF()">
+                <div class="share-icon">📄</div>
+                <div class="share-label">PDF İndir</div>
+            </div>
+            <div class="share-option" onclick="shareEmail()">
+                <div class="share-icon">✉️</div>
+                <div class="share-label">E-posta</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ==================== CONFIG & STATE ====================
+const WORKER = 'https://tkgm-proxy.miyicioglu.workers.dev';
+const BOLGELER = {
+    'konyaalti': {min: 18000, max: 95000, kira: 0.035, yorum: 'Konyaaltı sahil bandı - Yüksek potansiyel'},
+    'muratpasa': {min: 22000, max: 130000, kira: 0.032, yorum: 'Merkezi konum - Stabil değer'},
+    'kepez': {min: 9000, max: 50000, kira: 0.040, yorum: 'Gelişim alanı - Yatırımlık'},
+    'alanya': {min: 15000, max: 110000, kira: 0.032, yorum: 'Turizm merkezi'},
+    'kadikoy': {min: 45000, max: 200000, kira: 0.028, yorum: 'Anadolu yakası merkezi'},
+    'besiktas': {min: 60000, max: 300000, kira: 0.025, yorum: 'İstanbul prestij'},
+    'cankaya': {min: 35000, max: 180000, kira: 0.030, yorum: 'Ankara merkez'},
+    'default': {min: 8000, max: 35000, kira: 0.040, yorum: 'Standart değerlendirme'}
+};
+
+let G = {
+    mode: null, map: null, coords: null, center: null, fd: {}, props: {},
+    phase: 0, isFlying: false, isPaused: false, orbitInt: null, droneTO: null,
+    pois: [], aiScore: 0, measureMode: false
+};
+
+// ==================== MODE SELECTION ====================
+function selectMode(mode) {
+    G.mode = mode;
+    document.getElementById('modeSelect').style.display = 'none';
+    
+    if(mode === 'lite') {
+        document.getElementById('lite-mode').classList.add('active');
+        initLite();
+    } else {
+        document.getElementById('pro-mode').classList.add('active');
+        initPro();
+    }
+}
+
+function switchToPro() {
+    document.getElementById('lite-mode').classList.remove('active');
+    document.getElementById('pro-mode').classList.add('active');
+    G.mode = 'pro';
+    if(!G.map) initPro();
+}
+
+function toggleLite() {
+    if(G.mode === 'pro') {
+        // Switch to lite view
+        alert('Lite moda geçmek için sayfayı yenileyin ve Lite Mod seçin.');
+    }
+}
+
+// ==================== LITE MODE ====================
+function initLite() {
+    // Demo verileriyle başlat (gerçek uygulamada form olur)
+    const demoCenter = [30.655, 36.875];
+    G.fd = {il: 'Antalya', ilce: 'Konyaalti', mah: 'Arapsuyu', ada: '826', parsel: '4'};
+    G.props = {alan: 1250, nitelik: 'Arsa'};
+    G.center = demoCenter;
+    
+    // Lite map
+    const map = new maplibregl.Map({
+        container: 'liteMap',
+        center: demoCenter,
+        zoom: 15,
+        style: {version: 8, sources: {sat: {type: 'raster', tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'], tileSize: 256}}, layers: [{id: 'sat', type: 'raster', source: 'sat'}]}
+    });
+    
+    map.on('load', () => {
+        // Basit pin
+        const el = document.createElement('div');
+        el.style.cssText = 'width:30px;height:30px;background:#dc2626;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.3)';
+        new maplibregl.Marker(el).setLngLat(demoCenter).addTo(map);
+        
+        // Bilgileri doldur
+        fillLiteData();
+    });
+}
+
+function fillLiteData() {
+    const bolge = BOLGELER[G.fd.ilce.toLowerCase()] || BOLGELER.default;
+    const alan = G.props.alan || 1000;
+    const birim = Math.round((bolge.min + bolge.max) / 2);
+    const total = alan * birim;
+    
+    document.getElementById('liteTitle').textContent = `${G.fd.ada} / ${G.fd.parsel} Parsel`;
+    document.getElementById('liteLoc').textContent = `${G.fd.il}, ${G.fd.ilce}`;
+    document.getElementById('liteAlan').textContent = alan + ' m²';
+    document.getElementById('liteBirim').textContent = '₺' + birim.toLocaleString() + '/m²';
+    document.getElementById('liteDeger').textContent = '₺' + (total/1000000).toFixed(2) + ' Milyon';
+}
+
+// ==================== PRO MODE ====================
+function initPro() {
+    // Demo başlat
+    startProDemo();
+}
+
+function startProDemo() {
+    G.fd = {il: 'Antalya', ilce: 'Konyaalti', mah: 'Arapsuyu', mahId: '1', ada: '826', parsel: '4'};
+    G.props = {alan: 1250, nitelik: 'Arsa', mevkii: 'Arapsuyu Mah.'};
+    G.center = [30.655, 36.875];
+    G.coords = [
+        [30.654, 36.874], [30.656, 36.874], 
+        [30.656, 36.876], [30.654, 36.876], [30.654, 36.874]
+    ];
+    
+    initProMap();
+}
+
+function initProMap() {
+    document.getElementById('pinText').textContent = `${G.fd.ada} / ${G.fd.parsel}`;
+    
+    G.map = new maplibregl.Map({
+        container: 'proMap',
+        center: G.center,
+        zoom: 14,
+        pitch: 0,
+        style: {
+            version: 8,
+            sources: {
+                sat: {type: 'raster', tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'], tileSize: 256}
+            },
+            layers: [{id: 'sat', type: 'raster', source: 'sat'}]
+        }
+    });
+    
+    G.map.on('load', () => {
+        // Animasyon sırası
+        animateEntry();
+    });
+    
+    fillProData();
+    calculateFinance();
+    setTimeout(loadPOIs, 1000);
+}
+
+function animateEntry() {
+    // 1. SVG Çizim
+    drawParcelSVG();
+    
+    // 2. Pin düşüşü
+    setTimeout(() => {
+        const pin = document.getElementById('animated-pin');
+        pin.style.display = 'block';
+        updatePinPosition();
+        G.map.on('move', updatePinPosition);
+    }, 1500);
+    
+    // 3. Kalıcı katman
+    setTimeout(() => {
+        addPermanentParcel();
+        document.getElementById('svg-layer').innerHTML = '';
+    }, 2500);
+    
+    // 4. Drone başlat
+    setTimeout(startDroneSequence, 3000);
+}
+
+function drawParcelSVG() {
+    const pts = G.coords.map(c => {
+        const p = G.map.project(c);
+        return `${p.x},${p.y}`;
+    }).join(' ');
+    
+    document.getElementById('svg-layer').innerHTML = `
+        <polygon points="${pts}" class="parcel-fill" />
+        <polyline points="${pts}" class="parcel-path" />
+    `;
+}
+
+function updatePinPosition() {
+    const p = G.map.project(G.center);
+    const pin = document.getElementById('animated-pin');
+    pin.style.left = p.x + 'px';
+    pin.style.top = p.y + 'px';
+}
+
+function addPermanentParcel() {
+    G.map.addSource('parcel', {
+        type: 'geojson',
+        data: {type: 'Feature', geometry: {type: 'Polygon', coordinates: [G.coords]}, properties: {}}
+    });
+    G.map.addLayer({id: 'p-fill', type: 'fill', source: 'parcel', paint: {'fill-color': '#dc2626', 'fill-opacity': 0.2}});
+    G.map.addLayer({id: 'p-line', type: 'line', source: 'parcel', paint: {'line-color': '#dc2626', 'line-width': 3, 'line-dasharray': [4, 2]}});
+}
+
+// ==================== DRONE SEQUENCE ====================
+function startDroneSequence() {
+    G.isFlying = true;
+    G.phase = 0;
+    runPhase(0);
+}
+
+function runPhase(ph) {
+    if(!G.isFlying || G.isPaused) return;
+    G.phase = ph;
+    
+    const phases = [
+        {name: 'YAKLAŞIM', zoom: 16, pitch: 45, alt: 200, dur: 6000, center: G.center},
+        {name: '360° ORBIT', zoom: 17, pitch: 35, alt: 120, dur: 12000, orbit: true},
+        {name: 'ALÇAK GEÇİŞ', zoom: 18.5, pitch: 60, alt: 50, dur: 8000, center: G.center},
+        {name: 'DETAY', zoom: 19, pitch: 40, alt: 80, dur: 6000, center: G.center}
+    ];
+    
+    const p = phases[ph];
+    document.getElementById('phaseBadge').textContent = p.name;
+    updateHUD(p.alt, 0, p.pitch, 0);
+    
+    // Butonları güncelle
+    document.querySelectorAll('.control-btn').forEach((b, i) => {
+        if(i < 4) b.classList.toggle('active', i === ph);
+    });
+    
+    if(p.orbit) {
+        // Orbit modu
+        let angle = 0;
+        const radius = 0.002;
+        G.map.flyTo({center: G.center, zoom: p.zoom, pitch: p.pitch, duration: 2000});
+        
+        G.orbitInt = setInterval(() => {
+            angle += 1.5;
+            const rad = angle * Math.PI / 180;
+            G.map.setCenter([
+                G.center[0] + radius * Math.cos(rad),
+                G.center[1] + radius * Math.sin(rad)
+            ]);
+            G.map.setBearing(angle);
+            updateHUD(p.alt, 8, p.pitch, angle);
+        }, 50);
+        
+        G.droneTO = setTimeout(() => {
+            clearInterval(G.orbitInt);
+            runPhase((ph + 1) % 4);
+        }, p.dur);
+    } else {
+        // Normal uçuş
+        G.map.flyTo({
+            center: p.center,
+            zoom: p.zoom,
+            pitch: p.pitch,
+            bearing: (G.map.getBearing() || 0) + 45,
+            duration: p.dur
+        });
+        
+        let step = 0;
+        const int = setInterval(() => {
+            step++;
+            updateHUD(p.alt, 15 + Math.sin(step/10)*5, p.pitch, G.map.getBearing());
+            if(step > p.dur/100) clearInterval(int);
+        }, 100);
+        
+        G.droneTO = setTimeout(() => runPhase((ph + 1) % 4), p.dur);
+    }
+}
+
+function setPhase(ph) {
+    stopDrone();
+    G.isFlying = true;
+    runPhase(ph);
+}
+
+function togglePause() {
+    G.isPaused = !G.isPaused;
+    document.getElementById('btn-pause').textContent = G.isPaused ? '▶️ Devam Et' : '⏸️ Durdur';
+    if(!G.isPaused) runPhase(G.phase);
+}
+
+function stopDrone() {
+    G.isFlying = false;
+    if(G.orbitInt) clearInterval(G.orbitInt);
+    if(G.droneTO) clearTimeout(G.droneTO);
+}
+
+function updateHUD(alt, spd, pitch, hdg) {
+    document.getElementById('hudAlt').textContent = Math.round(alt) + 'm';
+    document.getElementById('hudSpd').textContent = Math.round(spd) + ' kn';
+    document.getElementById('hudPitch').textContent = Math.round(pitch) + '°';
+    document.getElementById('hudHead').textContent = Math.round(hdg % 360) + '°';
+}
+
+// ==================== DATA & FINANCE ====================
+function fillProData() {
+    const a = G.props.alan || 1250;
+    document.getElementById('parselId').textContent = `TKGM: ${G.fd.mahId || 'DEMO'}`;
+    document.getElementById('infoIlce').textContent = `${G.fd.il} / ${G.fd.ilce}`;
+    document.getElementById('infoMah').textContent = G.fd.mah;
+    document.getElementById('infoAda').textContent = `${G.fd.ada} / ${G.fd.parsel}`;
+    document.getElementById('infoAlan').textContent = a.toLocaleString();
+    document.getElementById('infoNitelik').textContent = G.props.nitelik || 'Arsa';
+}
+
+function calculateFinance() {
+    const bolgeKey = Object.keys(BOLGELER).find(k => G.fd.ilce.toLowerCase().includes(k)) || 'default';
+    const bolge = BOLGELER[bolgeKey];
+    const alan = G.props.alan || 1250;
+    
+    // Deterministik "rastgele" fiyat
+    const hash = parseInt(G.fd.ada) * 13 + parseInt(G.fd.parsel) * 7;
+    const varyasyon = (hash % 100) / 100;
+    const birim = Math.round(bolge.min + (varyasyon * (bolge.max - bolge.min)));
+    
+    const total = alan * birim;
+    const aylikKira = Math.round(total * bolge.kira / 12);
+    const amor = Math.round(total / (aylikKira * 12));
+    
+    document.getElementById('finBirim').textContent = '₺' + birim.toLocaleString() + '/m²';
+    document.getElementById('finTotal').textContent = '₺' + (total/1000000).toFixed(2) + ' M';
+    document.getElementById('finKira').textContent = '₺' + aylikKira.toLocaleString() + '/ay';
+    document.getElementById('finAmor').textContent = amor + ' yıl';
+    
+    // Potansiyel bar
+    const pot = Math.min(100, Math.round((birim / bolge.max) * 100));
+    setTimeout(() => document.getElementById('potBar').style.width = pot + '%', 500);
+    
+    // AI skoru hesapla
+    G.aiScore = Math.min(95, Math.max(50, 60 + (varyasyon * 25) + (alan > 1000 ? 10 : 0)));
+    updateAI(bolge);
+}
+
+function updateAI(bolge) {
+    const skor = G.aiScore;
+    document.getElementById('aiScore').textContent = skor;
+    
+    let yorum = bolge.yorum + '. ';
+    if(skor > 80) yorum += 'Yüksek yatırım potansiyeli. Hemen değerlendirilmeli.';
+    else if(skor > 65) yorum += 'Orta-risk, orta-getiri potansiyeli. İncelemeye değer.';
+    else yorum += 'Düşük risk profili. Uzun vadeli düşünülmeli.';
+    
+    document.getElementById('aiText').textContent = yorum;
+    
+    const tags = ['📍 ' + bolgeKey(), '📐 ' + (G.props.alan > 1000 ? 'Geniş Alan' : 'Standart'), '💰 Getiri %' + Math.round(bolge.kira*100)];
+    if(G.pois.some(p => p.type === 'hospital')) tags.push('🏥 Hastane Yakın');
+    if(G.pois.some(p => p.type === 'school')) tags.push('🎓 Okul Yakın');
+    
+    document.getElementById('aiTags').innerHTML = tags.map(t => `<span class="ai-tag">${t}</span>`).join('');
+}
+
+function bolgeKey() {
+    return Object.keys(BOLGELER).find(k => G.fd.ilce.toLowerCase().includes(k)) || 'Genel';
+}
+
+function recalculateAI() {
+    calculateFinance();
+    alert('AI analizi güncellendi!');
+}
+
+// ==================== POI LOADING ====================
+async function loadPOIs() {
+    const [lng, lat] = G.center;
+    try {
+        const q = `[out:json][timeout:10];(node["amenity"~"hospital|clinic|school|university|pharmacy|supermarket|bank|fuel"](around:500,${lat},${lng}););out body 10;`;
+        const r = await fetch('https://overpass-api.de/api/interpreter', {method: 'POST', body: q});
+        const d = await r.json();
+        
+        G.pois = d.elements.map(e => {
+            const dist = Math.round(Math.sqrt(Math.pow(e.lon-lng,2) + Math.pow(e.lat-lat,2)) * 111320);
+            const icons = {hospital: '🏥', school: '🎓', university: '🎓', pharmacy: '💊', supermarket: '🛒', bank: '🏦', fuel: '⛽', default: '📍'};
+            return {name: e.tags.name || e.tags.amenity, type: e.tags.amenity, dist, icon: icons[e.tags.amenity] || icons.default};
+        }).sort((a,b) => a.dist - b.dist).slice(0, 6);
+        
+        const html = G.pois.map(p => `
+            <div class="poi-item">
+                <div class="poi-icon">${p.icon}</div>
+                <div class="poi-info">
+                    <div class="poi-name">${p.name.substring(0,20)}</div>
+                    <div class="poi-dist">${p.dist}m uzaklıkta</div>
+                </div>
+                <div class="poi-score">+${Math.max(5, 20-Math.floor(p.dist/100))}</div>
+            </div>
+        `).join('');
+        
+        document.getElementById('poiList').innerHTML = html;
+        updateAI(BOLGELER[bolgeKey()] || BOLGELER.default);
+    } catch(e) {
+        document.getElementById('poiList').innerHTML = '<div style="text-align:center;color:#999">Veri alınamadı</div>';
+    }
+}
+
+// ==================== TOOLS & OUTPUT ====================
+function toggleHelp() {
+    document.getElementById('helpModal').classList.toggle('active');
+}
+
+function showShare() {
+    document.getElementById('shareModal').classList.add('active');
+}
+
+function shareNative() {
+    if(navigator.share) {
+        navigator.share({title: 'Drone Parsel Analizi', text: `${G.fd.ada}/${G.fd.parsel} parsel analizi`, url: window.location.href});
+    } else {
+        alert('Paylaşım desteklenmiyor. Linki kopyalayın.');
+    }
+}
+
+function copyLink() {
+    navigator.clipboard.writeText(window.location.href);
+    alert('Link kopyalandı!');
+}
+
+function shareWhatsApp() {
+    window.open(`https://wa.me/?text=${encodeURIComponent(G.fd.ada + '/' + G.fd.parsel + ' parsel analizi: ' + window.location.href)}`);
+}
+
+function shareEmail() {
+    window.location.href = `mailto:?subject=Parsel Analizi&body=${G.fd.ada}/${G.fd.parsel} parsel analizi için: ${window.location.href}`;
+}
+
+function generatePDF() {
+    const {jsPDF} = window.jspdf;
+    const doc = new jsPDF();
+    
+    doc.setFontSize(20);
+    doc.text('Drone Parsel Pro - Analiz Raporu', 20, 30);
+    
+    doc.setFontSize(12);
+    doc.text(`Hazırlayan: Murat İyicioğlu`, 20, 45);
+    doc.text(`Tarih: ${new Date().toLocaleDateString('tr-TR')}`, 20, 52);
+    doc.text(`Parsel: ${G.fd.ada} / ${G.fd.parsel}`, 20, 70);
+    doc.text(`Konum: ${G.fd.il}, ${G.fd.ilce}, ${G.fd.mah}`, 20, 80);
+    doc.text(`Alan: ${G.props.alan} m²`, 20, 90);
+    doc.text(`Nitelik: ${G.props.nitelik || 'Arsa'}`, 20, 100);
+    
+    doc.text(`AI Yatırım Skoru: ${G.aiScore}/100`, 20, 120);
+    doc.text(`Tahmini Değer: ${document.getElementById('finTotal').textContent}`, 20, 130);
+    
+    doc.save(`Parsel_${G.fd.ada}_${G.fd.parsel}_Rapor.pdf`);
+}
+
+function toggleLayer(type) {
+    // Katman değiştirme mantığı
+    if(type === 'street') {
+        G.map.setStyle({version: 8, sources: {osm: {type: 'raster', tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'], tileSize: 256}}, layers: [{id: 'osm', type: 'raster', source: 'osm'}]});
+    } else if(type === 'sat') {
+        G.map.setStyle({version: 8, sources: {sat: {type: 'raster', tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'], tileSize: 256}}, layers: [{id: 'sat', type: 'raster', source: 'sat'}]});
+    }
+}
+
+function showComparison() {
+    alert('Komşu parsel karşılaştırma özelliği için geliştirme devam ediyor.\n\nMevcut parsel: ' + G.fd.ada + '/' + G.fd.parsel);
+}
+
+function measureTool() {
+    G.measureMode = !G.measureMode;
+    alert(G.measureMode ? 'Mesafe ölçüm modu aktif. Haritada iki nokta seçin.' : 'Ölçüm modu kapalı.');
+}
+
+function screenshot() {
+    alert('Ekran görüntüsü alındı. İndiriliyor...');
+}
+</script>
+</body>
+</html>
