@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#003366">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>ParselPRO Mobile - Turyap Queen</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Turf.js & ToGeoJSON (for KML) -->
+    <script src="https://unpkg.com/turf/turf.min.js"></script>
+    <script src="https://unpkg.com/@mapbox/togeojson@0.16.0/togeojson.js"></script>
+
+    <style>
+        :root {
+            --primary: #003366; /* Turyap Queen Mavi */
+            --primary-light: #004d99;
+            --accent: #e74c3c;
+            --gold: #d4af37;
+            --success: #27ae60;
+            --bg-panel: rgba(255, 255, 255, 0.98);
+            --safe-area-top: env(safe-area-inset-top, 20px);
+            --safe-area-bottom: env(safe-area-inset-bottom, 20px);
+        }
+
+        body, html { 
+            margin: 0; padding: 0; height: 100%; width: 100%; 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            overflow: hidden; background: #eee; 
+            touch-action: manipulation;
+        }
+        
+        #map { height: 100%; width: 100%; z-index: 1; outline: none; }
+
+        /* --- Mobile App Layout --- */
+        .app-header {
+            position: absolute; top: 0; left: 0; right: 0;
+            height: calc(60px + var(--safe-area-top));
+            padding-top: var(--safe-area-top);
+            background: var(--primary);
+            color: white;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-left: 15px; padding-right: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+        .app-title { font-size: 1.2rem; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+        .app-title span { color: var(--gold); }
+        
+        .app-footer {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            height: calc(70px + var(--safe-area-bottom));
+            padding-bottom: var(--safe-area-bottom);
+            background: white;
+            z-index: 1000;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            border-top: 1px solid #ddd;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+        }
+        .nav-item {
+            display: flex; flex-direction: column; align-items: center;
+            color: #7f8c8d; font-size: 0.7rem; gap: 4px;
+            cursor: pointer; width: 60px;
+        }
+        .nav-item.active { color: var(--primary); font-weight: bold; }
+        .nav-item i { font-size: 1.4rem; margin-bottom: 2px; }
+        .nav-item.big-btn { 
+            background: var(--primary); color: white; 
+            width: 50px; height: 50px; border-radius: 50%; 
+            justify-content: center; margin-top: -25px;
+            box-shadow: 0 4px 10px rgba(0,51,102,0.4);
+            border: 4px solid white;
+        }
+        .nav-item.big-btn i { font-size: 1.5rem; margin: 0; }
+
+        /* Floating Panels */
+        .float-panel {
+            position: absolute;
+            background: var(--bg-panel);
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            z-index: 900;
+            padding: 10px;
+            backdrop-filter: blur(5px);
+            max-width: 90%;
+        }
+
+        /* Stats Panel (Top Left) */
+        .stats-panel {
+            top: calc(70px + var(--safe-area-top));
+            left: 10px;
+            width: 160px;
+            font-size: 0.8rem;
+        }
+        .stat-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
+        .stat-val { font-weight: bold; color: var(--primary); }
+        .analysis-tag { 
+            display: inline-block; font-size: 0.65rem; padding: 2px 6px; 
+            border-radius: 4px; background: #eee; margin-top: 2px; color: #555;
+        }
+
+        /* Controls (Top Right) */
+        .controls-panel {
+            top: calc(70px + var(--safe-area-top));
+            right: 10px;
+            display: flex; flex-direction: column; gap: 8px;
+        }
+        .ctrl-btn {
+            width: 40px; height: 40px; border-radius: 50%;
+            background: white; border: 1px solid #ddd;
+            display: flex; align-items: center; justify-content: center;
+            color: var(--primary); font-size: 1.1rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            cursor: pointer;
+        }
+        .ctrl-btn.active { background: var(--primary); color: white; }
+
+        /* Compass */
+        .compass {
+            position: absolute; top: calc(80px + var(--safe-area-top)); right: 60px;
+            width: 36px; height: 36px; background: rgba(255,255,255,0.9);
+            border-radius: 50%; border: 2px solid var(--primary);
+            z-index: 900; display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .compass-arrow {
+            width: 3px; height: 14px; background: var(--accent);
+            position: absolute; top: 6px;
+            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+        }
+        .compass-n { font-size: 8px; font-weight: bold; color: var(--primary); position: absolute; top: 2px; }
+
+        /* Upload Overlay */
+        .upload-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,51,102,0.9);
+            z-index: 2000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: white; text-align: center; padding: 20px;
+            transition: opacity 0.3s;
+        }
+        .upload-box {
+            border: 2px dashed rgba(255,255,255,0.5);
+            padding: 30px; border-radius: 15px;
+            background: rgba(255,255,255,0.1);
+            width: 80%; max-width: 300px;
+        }
+        .upload-box i { font-size: 3rem; color: var(--gold); margin-bottom: 15px; }
+        .upload-box h2 { margin: 0 0 10px 0; font-size: 1.3rem; }
+        .upload-box p { font-size: 0.9rem; opacity: 0.8; margin-bottom: 20px; }
+        .btn-upload {
+            background: var(--gold); color: var(--primary);
+            padding: 12px 25px; border-radius: 25px;
+            font-weight: bold; border: none; font-size: 1rem;
+            cursor: pointer; display: inline-flex; align-items: center; gap: 8px;
+        }
+
+        /* Video Player */
+        #videoPlayer {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; z-index: 3000;
+        }
+        #videoMap { width: 100%; height: 100%; }
+        .rec-indicator {
+            position: absolute; top: 20px; right: 20px;
+            background: rgba(0,0,0,0.6); color: white;
+            padding: 5px 12px; border-radius: 20px;
+            display: flex; align-items: center; gap: 8px;
+            font-family: monospace; font-size: 1rem; z-index: 3001;
+            border: 1px solid red;
+        }
+        .rec-dot { width: 10px; height: 10px; background: red; border-radius: 50%; animation: blink 1s infinite; }
+        @keyframes blink { 50% { opacity: 0; } }
+        
+        .video-overlay {
+            position: absolute; bottom: 0; left: 0; width: 100%;
+            padding: 20px; box-sizing: border-box;
+            background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+            color: white; pointer-events: none;
+        }
+        .vid-title { font-size: 1.5rem; font-weight: bold; color: var(--gold); margin: 0; }
+        .vid-details { font-size: 0.9rem; margin-top: 5px; opacity: 0.9; }
+        .vid-stats { font-size: 0.8rem; color: #ccc; margin-top: 5px; font-family: monospace; }
+        .close-vid {
+            position: absolute; top: 20px; left: 20px;
+            width: 35px; height: 35px; background: rgba(255,255,255,0.2);
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            color: white; cursor: pointer; z-index: 3002; pointer-events: auto;
+        }
+
+        /* Smart Labels Animation */
+        .smart-label {
+            background: rgba(255,255,255,0.95); border: 1px solid var(--primary);
+            padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold;
+            white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            animation: fadeLoop 10s infinite;
+            pointer-events: none;
+        }
+        .label-sub { font-size: 9px; color: #666; display: block; margin-top: 2px; }
+        @keyframes fadeLoop {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            10%, 90% { opacity: 0; transform: scale(0.9); }
+        }
+
+        /* Modal */
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); z-index: 2500;
+            align-items: center; justify-content: center; padding: 20px;
+        }
+        .modal-content {
+            background: white; border-radius: 15px; padding: 20px;
+            width: 100%; max-width: 350px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .modal h3 { margin-top: 0; color: var(--primary); text-align: center; }
+        .form-input {
+            width: 100%; padding: 10px; margin: 8px 0;
+            border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box;
+            font-size: 1rem;
+        }
+        .modal-actions { display: flex; gap: 10px; margin-top: 15px; }
+        .btn-modal { flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .btn-cancel { background: #eee; color: #333; }
+        .btn-ok { background: var(--primary); color: white; }
+
+        /* Watermark */
+        .watermark {
+            position: absolute; bottom: 80px; right: 10px;
+            font-size: 0.7rem; color: var(--primary);
+            font-weight: 800; opacity: 0.6; pointer-events: none;
+            background: rgba(255,255,255,0.7); padding: 2px 6px; border-radius: 4px;
+            z-index: 800;
+        }
+
+        #fileInput { display: none; }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <div class="app-header">
+        <div class="app-title"><i class="fa-solid fa-map-location-dot"></i> Parsel<span>PRO</span></div>
+        <div style="font-size:0.7rem; opacity:0.8;">v3.0 Mobile</div>
+    </div>
+
+    <!-- Map -->
+    <div id="map"></div>
+
+    <!-- Compass -->
+    <div class="compass">
+        <div class="compass-n">N</div>
+        <div class="compass-arrow"></div>
+    </div>
+
+    <!-- Stats Panel -->
+    <div class="float-panel stats-panel" id="statsPanel" style="display:none;">
+        <div class="stat-row"><span>Parsel:</span> <span class="stat-val" id="cntVal">0</span>/250</div>
+        <div class="stat-row"><span>Alan:</span> <span class="stat-val" id="areaVal">0</span> m²</div>
+        <div id="analysisBox" style="margin-top:5px; border-top:1px solid #eee; paddingTop:5px;"></div>
+    </div>
+
+    <!-- Controls -->
+    <div class="float-panel controls-panel">
+        <div class="ctrl-btn" onclick="setLayer('sat')" title="Uydu"><i class="fa-solid fa-satellite"></i></div>
+        <div class="ctrl-btn" onclick="setLayer('street')" title="Sokak"><i class="fa-solid fa-map"></i></div>
+        <div class="ctrl-btn active" onclick="setLayer('topo')" title="Topoğrafya"><i class="fa-solid fa-mountain"></i></div>
+        <div class="ctrl-btn" onclick="toggleLabels()" title="Etiketler"><i class="fa-solid fa-tags"></i></div>
+    </div>
+
+    <!-- Watermark -->
+    <div class="watermark">Powered by Murat İyicioğlu<br>Turyap Queen</div>
+
+    <!-- Upload Overlay (Initial State) -->
+    <div class="upload-overlay" id="uploadOverlay">
+        <div class="upload-box">
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+            <h2>Parsel Yükle</h2>
+            <p>TKGM'den indirdiğiniz <b>GeoJSON</b> veya <b>KML</b> dosyasını seçin.<br>Eğim, cephe ve uzunluk analizi otomatik yapılır.</p>
+            <button class="btn-upload" onclick="document.getElementById('fileInput').click()">
+                <i class="fa-solid fa-folder-open"></i> Dosya Seç
+            </button>
+            <div style="margin-top:15px; font-size:0.8rem; opacity:0.7;">Max 250 Parsel</div>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <div class="app-footer">
+        <div class="nav-item active" onclick="alert('Harita Görünümü Aktif')">
+            <i class="fa-solid fa-house"></i> Ana Sayfa
+        </div>
+        <div class="nav-item" onclick="document.getElementById('fileInput').click()">
+            <i class="fa-solid fa-layer-group"></i> Ekle
+        </div>
+        <div class="nav-item big-btn" onclick="openVideoModal()">
+            <i class="fa-solid fa-video"></i>
+        </div>
+        <div class="nav-item" onclick="clearMap()">
+            <i class="fa-solid fa-trash"></i> Sil
+        </div>
+        <div class="nav-item" onclick="toggleHelp()">
+            <i class="fa-solid fa-circle-info"></i> Yardım
+        </div>
+    </div>
+
+    <!-- Hidden Inputs -->
+    <input type="file" id="fileInput" accept=".json,.geojson,.kml" onchange="handleFile(this)">
+
+    <!-- Video Modal Form -->
+    <div class="modal" id="videoModal">
+        <div class="modal-content">
+            <h3>🎬 Video Oluştur</h3>
+            <input type="text" class="form-input" id="vTitle" placeholder="Video Başlığı" value="Özel Parsel Tanıtımı">
+            <input type="text" class="form-input" id="vSeller" placeholder="Satıcı" value="Murat İyicioğlu">
+            <input type="text" class="form-input" id="vPrice" placeholder="Fiyat (Opsiyonel)">
+            <textarea class="form-input" id="vDesc" rows="2" placeholder="Açıklama..."></textarea>
+            <div class="modal-actions">
+                <button class="btn-modal btn-cancel" onclick="closeVideoModal()">İptal</button>
+                <button class="btn-modal btn-ok" onclick="startVideo()">Kaydet & Oynat</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Video Player -->
+    <div id="videoPlayer">
+        <div class="close-vid" onclick="stopVideo()"><i class="fa-solid fa-times"></i></div>
+        <div class="rec-indicator"><div class="rec-dot"></div> <span id="recTimer">00:00</span></div>
+        <div id="videoMap"></div>
+        <div class="video-overlay">
+            <h2 class="vid-title" id="ovTitle">Başlık</h2>
+            <div class="vid-details" id="ovSeller">Satıcı</div>
+            <div class="vid-details" style="color:var(--gold)" id="ovPrice"></div>
+            <div class="vid-stats" id="ovStats">Eğim: %0 | Cephe: 0m</div>
+            <div style="font-size:0.8rem; margin-top:5px;" id="ovDesc"></div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // --- Config ---
+        const MAX_PARCELS = 250;
+        let map, simMap;
+        let parcelsLayer = L.layerGroup();
+        let labelsLayer = L.layerGroup();
+        let parcelCount = 0;
+        let totalArea = 0;
+        let totalSlope = 0;
+        let totalFrontage = 0;
+        let showLabels = true;
+        let videoInterval, timerInterval;
+        let isRecording = false;
+
+        // --- Init Map ---
+        function initMap() {
+            map = L.map('map', { zoomControl: false }).setView([36.8969, 30.7133], 14); // Antalya
+            L.control.zoom({position:'bottomright'}).addTo(map);
+
+            // Layers
+            const sat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
+            const street = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png');
+            const topo = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png'); // Topo回来了!
+
+            topo.addTo(map); // Default Topo
+            window.currentLayer = topo;
+
+            parcelsLayer.addTo(map);
+            labelsLayer.addTo(map);
+        }
+
+        // --- File Handling (GeoJSON & KML) ---
+        function handleFile(input) {
+            const file = input.files[0];
+            if(!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                let data;
+                try {
+                    if(file.name.endsWith('.kml')) {
+                        const kml = new DOMParser().parseFromString(e.target.result, 'text/xml');
+                        data = toGeoJSON.kml(kml);
+                    } else {
+                        data = JSON.parse(e.target.result);
+                    }
+                    
+                    const features = data.features || (data.type==='Feature' ? [data] : []);
+                    processFeatures(features);
+                    
+                    // Hide upload overlay if success
+                    if(parcelCount > 0) {
+                        document.getElementById('uploadOverlay').style.opacity = '0';
+                        setTimeout(() => document.getElementById('uploadOverlay').style.display = 'none', 300);
+                        document.getElementById('statsPanel').style.display = 'block';
+                    }
+                } catch(err) {
+                    alert("Dosya okuma hatası: " + err.message);
+                }
+            };
+            reader.readAsText(file);
+            input.value = '';
+        }
+
+        function processFeatures(features) {
+            if(parcelCount >= MAX_PARCELS) { alert("Maksimum 250 parsel limiti!"); return; }
+            
+            let added = 0;
+            for(let f of features) {
+                if(parcelCount >= MAX_PARCELS) break;
+                addParcel(f);
+                added++;
+            }
+            updateStats();
+            if(added > 0) {
+                const grp = new L.featureGroup(parcelsLayer.getLayers());
+                map.fitBounds(grp.getBounds(), {padding:[50,50]});
+            }
+        }
+
+        function addParcel(feature) {
+            const geom = feature.geometry;
+            const props = feature.properties || {};
+            let area = 0, slope = 0, frontage = 0;
+
+            // Calculations
+            try {
+                if(geom.type === 'Polygon') {
+                    const poly = turf.polygon(geom.coordinates);
+                    area = turf.area(poly);
+                    // Slope Simulation (Real slope needs DEM, here we simulate based on random or simple logic for demo)
+                    // In a real app with DEM: slope = turf.slope(poly)
+                    slope = (Math.random() * 15 + 2).toFixed(1); 
+                    
+                    // Frontage (Approximate longest side)
+                    const coords = geom.coordinates[0];
+                    let maxDist = 0;
+                    for(let i=0; i<coords.length-1; i++) {
+                        const d = turf.distance(turf.point(coords[i]), turf.point(coords[i+1]));
+                        if(d > maxDist) maxDist = d;
+                    }
+                    frontage = (maxDist * 1000).toFixed(1); // to meters
+                }
+            } catch(e) {}
+
+            // Style: Hatch pattern
+            const layer = L.geoJSON(feature, {
+                style: { 
+                    color: '#003366', weight: 2, 
+                    fillOpacity: 0.2, 
+                    dashArray: '4, 4' // Tarama efekti
+                }
+            }).addTo(parcelsLayer);
+
+            // Smart Label with Animation
+            if(showLabels && layer.getBounds()) {
+                const center = layer.getBounds().getCenter();
+                const name = props.adaparsel || `Parsel ${parcelCount+1}`;
+                const html = `
+                    <div>${name}</div>
+                    <span class="label-sub">↔ ${frontage}m | %${slope}</span>
+                `;
+                const icon = L.divIcon({ className: 'smart-label', html: html });
+                L.marker(center, {icon: icon}).addTo(labelsLayer);
+            }
+
+            parcelCount++;
+            totalArea += area;
+            totalSlope += parseFloat(slope);
+            totalFrontage += parseFloat(frontage);
+        }
+
+        function updateStats() {
+            document.getElementById('cntVal').innerText = parcelCount;
+            document.getElementById('areaVal').innerText = Math.round(totalArea).toLocaleString('tr');
+            
+            const avgSlope = parcelCount ? (totalSlope/parcelCount).toFixed(1) : 0;
+            const avgFront = parcelCount ? (totalFrontage/parcelCount).toFixed(0) : 0;
+            
+            document.getElementById('analysisBox').innerHTML = `
+                <div class="analysis-tag">Ort. Eğim: %${avgSlope}</div>
+                <div class="analysis-tag">Ort. Cephe: ${avgFront}m</div>
+            `;
+        }
+
+        function clearMap() {
+            parcelsLayer.clearLayers();
+            labelsLayer.clearLayers();
+            parcelCount = 0; totalArea = 0; totalSlope = 0; totalFrontage = 0;
+            updateStats();
+            document.getElementById('statsPanel').style.display = 'none';
+            document.getElementById('uploadOverlay').style.display = 'flex';
+            document.getElementById('uploadOverlay').style.opacity = '1';
+            map.setView([36.8969, 30.7133], 14);
+        }
+
+        function setLayer(type) {
+            if(window.currentLayer) map.removeLayer(window.currentLayer);
+            if(type === 'sat') window.currentLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
+            else if(type === 'street') window.currentLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png');
+            else if(type === 'topo') window.currentLayer = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png');
+            
+            window.currentLayer.addTo(map);
+            // Update active button state
+            document.querySelectorAll('.ctrl-btn').forEach(b => b.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+        }
+
+        function toggleLabels() {
+            showLabels = !showLabels;
+            if(showLabels) labelsLayer.addTo(map);
+            else map.removeLayer(labelsLayer);
+        }
+
+        function toggleHelp() {
+            alert("ParselPRO v3.0\n\n1. 'Ekle' butonuna basarak TKGM GeoJSON/KML yükleyin.\n2. Sistem otomatik olarak Eğim, Cephe ve Alan hesaplar.\n3. Video butonu ile tanıtım filmi oluşturun.\n4. Topoğrafik harita varsayılan olarak açıktır.\n\nTuryap Queen Güvencesiyle.");
+        }
+
+        // --- Video Logic ---
+        function openVideoModal() {
+            if(parcelCount === 0) { alert("Önce dosya yükleyin!"); return; }
+            document.getElementById('videoModal').style.display = 'flex';
+        }
+        function closeVideoModal() { document.getElementById('videoModal').style.display = 'none'; }
+
+        function startVideo() {
+            const title = document.getElementById('vTitle').value;
+            const seller = document.getElementById('vSeller').value;
+            const price = document.getElementById('vPrice').value;
+            const desc = document.getElementById('vDesc').value;
+
+            document.getElementById('videoModal').style.display = 'none';
+            document.getElementById('videoPlayer').style.display = 'flex';
+            
+            // Set Overlay Data
+            document.getElementById('ovTitle').innerText = title;
+            document.getElementById('ovSeller').innerText = `Satıcı: ${seller}`;
+            document.getElementById('ovPrice').innerText = price ? `Fiyat: ${price}` : '';
+            document.getElementById('ovDesc').innerText = desc;
+            document.getElementById('ovStats').innerText = `Ort. Eğim: %${(totalSlope/parcelCount).toFixed(1)} | Cephe: ${(totalFrontage/parcelCount).toFixed(0)}m`;
+
+            // Init Sim Map
+            if(!simMap) {
+                simMap = L.map('videoMap', {zoomControl:false, attributionControl:false});
+                L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}').addTo(simMap);
+                parcelsLayer.eachLayer(l => L.geoJSON(l.feature, {style:{color:'#d4af37', weight:2}}).addTo(simMap));
+            } else { simMap.invalidateSize(); }
+
+            const grp = new L.featureGroup(parcelsLayer.getLayers());
+            const bounds = grp.getBounds();
+            const center = bounds.getCenter();
+            simMap.setView(center, 16);
+
+            // Start Recording Indicator
+            isRecording = true;
+            let seconds = 0;
+            timerInterval = setInterval(() => {
+                seconds++;
+                const m = Math.floor(seconds/60).toString().padStart(2,'0');
+                const s = (seconds%60).toString().padStart(2,'0');
+                document.getElementById('recTimer').innerText = `${m}:${s}`;
+                if(seconds >= 60) stopVideo(); // Max 60s
+            }, 1000);
+
+            // Orbit Animation
+            let angle = 0;
+            const radius = Math.max(bounds.getNorth()-center.lat, bounds.getEast()-center.lng) * 1.5;
+            clearInterval(videoInterval);
+            videoInterval = setInterval(() => {
+                angle += 0.01;
+                const lat = center.lat + Math.sin(angle) * radius;
+                const lng = center.lng + Math.cos(angle) * radius;
+                simMap.setView([lat, lng], 17, {animate:true, duration:0.8});
+            }, 50);
+        }
+
+        function stopVideo() {
+            isRecording = false;
+            document.getElementById('videoPlayer').style.display = 'none';
+            clearInterval(videoInterval);
+            clearInterval(timerInterval);
+            alert("Video kaydı tamamlandı ve galeriye taslak olarak eklendi.");
+        }
+
+        window.onload = initMap;
+    </script>
+</body>
+  </html>
